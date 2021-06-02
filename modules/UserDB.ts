@@ -1,4 +1,4 @@
-const { SySqlConnect } = require('../util/mysqlConfig')
+var { SySqlConnect } = require('../util/mysqlConfig')
 
 module.exports = {
     // 手机号查询用户信息

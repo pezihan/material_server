@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const UserMessage = require('../controllers/client-side/userMessage')
+const Usermaterial = require('../controllers/client-side/userMaterial')
 
 
 // 测试
@@ -23,5 +24,8 @@ router.post('/setUserMsg', UserMessage.setUserMsg)
 router.post('/background', UserMessage.background)
 // 获取用户粉丝与关注列表
 router.get('/holdlist', UserMessage.holdlist)
+
+// 获取用户素材
+router.get('/usermaterial', Usermaterial.usermaterial)
 
 module.exports = router;
