@@ -1,6 +1,8 @@
 var UserDB = require('../../modules/UserDB')
 var MaterialDB = require('../../modules/MaterialDB')
-
+var Mulet = require('../../util/multerconfig')
+var TagDB = require('../../modules/TagDB')
+var makeTag = require('../../lib/makeTag')
 
 // 获取用户的主页素材
 const usermaterial = async (req: any, res: any) => {
@@ -85,6 +87,63 @@ const usermaterial = async (req: any, res: any) => {
     res.send({data: result, meta: { msg: '获取成功', status: 200 }})
 }
 
+// 上传素材
+const upMaterial = async (req: any, res: any) => {
+    const userMsg = req.userMsg
+    let { scene_desc, type, tag_arr } = req.query
+    tag_arr = [1,2,3,4]
+    scene_desc = '艺术植物生活头像'
+    if (type == '' || type == undefined || type < 1 || type > 2 || Array.isArray(tag_arr) == false) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 404 }})
+        return
+    }
+    req.storagePath = type == 1 ? 'material_images' : 'material_video'
+    Mulet.updateImg (req, res, async (err: any) => {
+        if(!!err){
+            res.send({data:{},meta:{msg: '超过服务器传输限制',status: 400}})
+            return;
+        }
+        if(!!req.file){
+            let phone_path = ''
+            let video_path = ''
+            let md5 = req.md5
+            if (type == 1) {
+                phone_path = req.filePath
+            }else if (type == 2) {
+                // 上传的视频
+                video_path = req.filePath
+            }
+            // 保存到数据库
+            const result = await MaterialDB.setUserMaterial(userMsg.id, phone_path, video_path, md5, type, scene_desc)
+            if (result == 500) {
+                res.send({data:{},meta:{msg: '上传失败',status: 500}})
+                return
+            } else if (result == false) {
+                res.send({data:{},meta:{msg: '上传失败',status: 400}})
+                return
+            }
+            res.send({data:{id: result},meta:{msg: '上传成功',status: 201}})
+            // 查询用户传来的标签内容
+            const tagMsg = await TagDB.getTagMsg(tag_arr)
+            if (tagMsg == 500) {
+                console.log(new Date().toLocaleString(),'分类标签查询失败');
+            }
+            // 将用户传过来的分类标签写入数据
+            const msg = await TagDB.setScnenTag(result, tagMsg)
+            if (msg == 500 || msg == false) {
+                console.log(new Date().toLocaleString(),'分类标签存储失败');
+            }
+            // 通过文案对此素材进行分类
+            if (scene_desc != '' || scene_desc != undefined) {
+                makeTag.participle(result, scene_desc)
+            }
+        } else {
+            res.send({data:{},meta:{msg: '上传文件不支持',status: 400}})
+        }
+    })
+}
+
 module.exports ={
-    usermaterial
+    usermaterial,
+    upMaterial
 }

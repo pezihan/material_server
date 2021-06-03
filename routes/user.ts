@@ -1,7 +1,8 @@
 var express = require('express');
 var router = express.Router();
 const UserMessage = require('../controllers/client-side/userMessage')
-const Usermaterial = require('../controllers/client-side/userMaterial')
+const UserMaterial = require('../controllers/client-side/userMaterial')
+const HomeMaterial = require('../controllers/client-side/homeMaterial')
 
 
 // 测试
@@ -26,6 +27,11 @@ router.post('/background', UserMessage.background)
 router.get('/holdlist', UserMessage.holdlist)
 
 // 获取用户素材
-router.get('/usermaterial', Usermaterial.usermaterial)
+router.get('/usermaterial', UserMaterial.usermaterial)
+// 上传素材
+router.post('/upMaterial', UserMaterial.upMaterial)
+
+// 获取分类标签
+router.get('/classify', HomeMaterial.classify)
 
 module.exports = router;

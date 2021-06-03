@@ -36,7 +36,7 @@ module.exports = {
         return result
     },
     // 查询素材的点赞、收藏、评论数量
-    async getMaterialSum(materiaIdArr: Array<number>) {
+    async getMaterialSum(materiaIdArr: Array<number>):Promise<number | object> {
         if (materiaIdArr.length === 0) {
             return {
                 like: [],
@@ -76,5 +76,28 @@ module.exports = {
             collect: result2,
             comment: result3
         }
+    },
+    // 获取分类标签
+    async getTag ():Promise<Array<object> | number> {
+        const sql = `SELECT * FROM scene_tag_category`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 添加素材
+    async setUserMaterial(user_id: number, phone_path: string, video_path: string, md5: string, type: number, scene_desc: string = '') {
+        const up_time = new Date().getTime()
+        const state = 1
+        const sql = `INSERT INTO material (user_id, phone_path, video_path, md5, scene_desc, state, up_time, type) VALUES (?,?,?,?,?,?,?,?)`
+        const sqlArr = [user_id, phone_path, video_path, md5, scene_desc, state, up_time, type]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return result.insertId
     }
 }

@@ -192,7 +192,8 @@ const setUserMsg = async (req: any, res: any) => {
 
 // 修改用户资料背景
 const background = async (req: any, res: any) => {
-    Mulet.updateImg (req, res, async (err: any) => {
+    req.storagePath = 'material_images'
+    Mulet.updateImg (req, res,async (err: any) => {
         const userMsg = req.userMsg
         if(!!err){
             res.send({data:{},meta:{msg: '超过服务器传输限制',status: 400}})
