@@ -1,4 +1,9 @@
-var nodejieba = require('nodejieba')
+// 载入模块
+var Segment = require('node-segment').Segment;
+// 创建实例
+var segment = new Segment();
+// 使用默认的识别模块及字典
+segment.useDefault();
 var TagDB = require('../modules/TagDB')
 
 module.exports = {
@@ -11,7 +16,7 @@ module.exports = {
                 newTagText += tagText[i]
             }
         }
-        let jiebaTagTextArr = nodejieba.cut(newTagText)
+        let jiebaTagTextArr = segment.doSegment(newTagText).map((v: any) => v.w)
         // 查询标签
         const result = await TagDB.queryTag(jiebaTagTextArr)
         if (result == 500) {

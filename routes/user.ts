@@ -39,5 +39,7 @@ router.get('/recommend', HomeMaterial.recommend)
 router.get('/sort', HomeMaterial.sort)
 // 搜索
 router.get('/search', HomeMaterial.search)
+// 获取热搜
+router.get('/hotSearch', HomeMaterial.hotSearch)
 
 module.exports = router;

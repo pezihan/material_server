@@ -1,7 +1,12 @@
 var UserDB = require('../../modules/UserDB')
 var MaterialDB = require('../../modules/MaterialDB')
 var TagDB = require('../../modules/TagDB')
-var nodejieba = require('nodejieba')
+// 载入模块
+var Segment = require('node-segment').Segment;
+// 创建实例
+var segment = new Segment();
+// 使用默认的识别模块及字典
+segment.useDefault();
 
 // 标签获取
 const classify = async (req: any, res: any) => {
@@ -151,15 +156,16 @@ const sort = async (req: any, res: any) => {
 // 搜索
 const search = async (req: any, res: any) => {
     const { query, type, start, limit } = req.query
-    if (type == '' || type == undefined || type < 1 || type > 3 || start == '' || start == undefined || start < 1 || limit < 1 || limit == '' || limit == undefined) {
+    if (type == '' || type == undefined || type < 1 || type > 4 || start == '' || start == undefined || start < 1 || limit < 1 || limit == '' || limit == undefined) {
         res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
         return
     } else if (query == '' || query == undefined) {
         res.send({data: [], meta: { msg: '搜索关键字为空', status: 403 }})
         return
     }
+    const str = query.replace(/[\ |\~|\`|\!|\@|\#|\。|\$|\%|\^|\&|\*|\(|\)|\-|\_|\+|\=|\||\\|\[|\]|\{|\}|\;|\:|\"|\'|\,|\<|\.|\>|\/|\?]/g,"");
     // 分词
-    const queryArr = nodejieba.cut(query)
+    let queryArr = segment.doSegment(str).map((v: any) => v.w)
     if (type == 4) {
         // 获取达人信息
         const userMsgArr = await UserDB.queryUser(queryArr, start, limit)
@@ -198,12 +204,93 @@ const search = async (req: any, res: any) => {
             data.push(usermsg)
         });
         res.send({data: data,meta:{msg: '获取成功',status: 200}})
+    } else {
+        // 素材
+        // 查询此标签的素材
+        const tagRes = await TagDB.querymaterialTag(queryArr)
+        if (tagRes == 500) {
+            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+            return
+        }
+        const Arr = tagRes.map((v: any) => v.scene_id)
+        const result = await MaterialDB.queryMateria(Arr, type, start, limit)
+        if (result == 500) {
+            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+            return
+        }
+        // 获取素材的素材的点赞、收藏、评论数量
+        const materiaIdArr = result.map((v: any) => v.id)
+        const statistics = await MaterialDB.getMaterialSum(materiaIdArr)
+        if (statistics === 500) {
+            res.send({data: [], meta: { msg: '数据库查询失败', status: 500 }})
+            return
+        }
+        // 获取用户信息
+        const userArr = result.map((v: any) => v.user_id)
+        const userMessage = await UserDB.userArrMsg(userArr)
+        if (userMessage == 500) {
+            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+            return
+        }
+        result.forEach((item: any, index: number) => {
+            item.likeSum = 0
+            item.collectSum = 0
+            item.commentSum = 0
+            item.userMsg = {}
+            const i = userMessage.findIndex((v: any) => v.id == item.user_id)
+            if (i != -1) {
+                item.userMsg = {
+                    id: userMessage[i].id,
+                    user_image: userMessage[i].user_image,
+                    user_name: userMessage[i].user_name,
+                    phone: userMessage[i].phone,
+                    sex: userMessage[i].sex,
+                    region: userMessage[i].region,
+                    signature: userMessage[i].signature,
+                    user_type: userMessage[i].user_type
+                }
+            }
+            // 点赞
+            const likeIndex = statistics.like.findIndex((v: any) => v.scene_id === item.id)
+            if (likeIndex !== -1) {
+                item.likeSum = statistics.like[likeIndex]['COUNT(scene_id)']
+            }
+            // 收藏
+            const collectIndex = statistics.collect.findIndex((v: any) => v.scene_id === item.id)
+            if (collectIndex !== -1) {
+                item.collectSum = statistics.collect[collectIndex]['COUNT(scene_id)']
+            }
+            // 评论
+            const commentIndex = statistics.comment.findIndex((v: any) => v.scene_id === item.id)
+            if (commentIndex !== -1) {
+                item.commentSum = statistics.comment[commentIndex]['COUNT(scene_id)']
+            }
+        });
+        res.send({data: result,meta:{msg: '获取成功',status: 200}})
     }
+    const user_id = req.userMsg == undefined ? 0 : req.userMsg.id
+    // 将将关键词写入数据库
+    TagDB.setKeyword(queryArr, user_id)
+}
+
+// 热搜
+const hotSearch = async (req: any, res: any) => {
+    const { limit } = req.query
+    if (limit == '') {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+    }
+    const result = await TagDB.getHotSearch(1, limit)
+    if (result == 500) {
+        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        return
+    }
+    res.send({data: result, meta: { msg: '获取成功', status: 200 }})
 }
 
 module.exports = {
     classify,
     recommend,
     sort,
-    search
+    search,
+    hotSearch
 }

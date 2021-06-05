@@ -119,20 +119,18 @@ const resource = async (req: any, res: any) => {
 // 用户信息获取
 const userMsg = async (req: any, res: any) => {
     const { user_id } = req.query
-    let userMsg = req.userMsg
     if (user_id  == '' || user_id == undefined) {
         res.send({data: {}, meta: { msg: '请求参数错误', status: 404 }})
         return
-    } else if (user_id !== userMsg.id) {
-        // 查询用户信息
-        userMsg = await UserDB.getIdUserMsg(user_id)
-        if (userMsg == 500) {
-            res.send({data: {}, meta: { msg: '服务器错误', status: 500 }})
-            return
-        } else if (userMsg.length === 0) {
-            res.send({data: {}, meta: { msg: '无此用户', status: 500 }})
-            return
-        }
+    }
+    // 查询用户信息
+    const userMsg = await UserDB.getIdUserMsg(user_id)
+    if (userMsg == 500) {
+        res.send({data: {}, meta: { msg: '服务器错误', status: 500 }})
+        return
+    } else if (userMsg.length === 0) {
+        res.send({data: {}, meta: { msg: '无此用户', status: 500 }})
+        return
     }
     // 查询用户的关注数量与粉丝数量
     const result = await UserDB.userAttention(user_id, 1)
@@ -144,7 +142,6 @@ const userMsg = async (req: any, res: any) => {
         id: userMsg[0].id,
         user_image: userMsg[0].user_image,
         user_name: userMsg[0].user_name,
-        phone: userMsg[0].phone,
         creat_time: userMsg[0].creat_time,
         sex: userMsg[0].sex,
         region: userMsg[0].region,

@@ -5,14 +5,17 @@ const bodyParser = require('body-parser')
 const adminRouter = require('./routes/admin')
 const userRouter = require('./routes/user')
 const verifyPath = require('./controllers/verify')
+const cors = require('cors') // 跨域插件
 const app = express();
 // 端口
 const port = 4000;
+
 
 // 改写
 const http = require('http');
 const server = http.createServer(app);
 
+app.use(cors()) // 挂载跨域插件
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 

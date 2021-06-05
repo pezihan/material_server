@@ -135,7 +135,14 @@ module.exports = {
             return []
         }
         const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
-        const sql = `SELECT * FROM users WHERE id LIKE '%${queryArr}%' OR user_name LIKE '%${queryArr}%' OR signature LIKE '%${queryArr}%' ORDER BY id DESC LIMIT ${pageSize},${limit}`
+        let sql = `SELECT * FROM users WHERE `
+        queryArr.forEach((item: any, index: number) => {
+            if (index == queryArr.length - 1) {
+                sql += `id LIKE '%${item}%' OR user_name LIKE '%${item}%' OR signature LIKE '%${item}%' ORDER BY id DESC LIMIT ${pageSize},${limit}`
+            } else {
+                sql += `id LIKE '%${item}%' OR user_name LIKE '%${item}%' OR signature LIKE '%${item}%' OR `
+            }
+        })
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
