@@ -128,5 +128,18 @@ module.exports = {
             return 500
         }
         return { holdSum: result1, fansSum: result2 }
+    },
+    // 模糊查询用户信息
+    async queryUser(queryArr: Array<string>, start: number, limit: number) {
+        if (queryArr.length == 0) {
+            return []
+        }
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        const sql = `SELECT * FROM users WHERE id LIKE '%${queryArr}%' OR user_name LIKE '%${queryArr}%' OR signature LIKE '%${queryArr}%' ORDER BY id DESC LIMIT ${pageSize},${limit}`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
     }
 }

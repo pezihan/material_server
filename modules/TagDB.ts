@@ -52,5 +52,14 @@ module.exports = {
             return 500
         }
         return result
+    },
+    // 标签获取全部素材
+    async getAllTagMateria(tag_id: number) {
+        const sql = `SELECT * FROM scene_tag_relation WHERE tag_id = ${tag_id}`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
     }
 }

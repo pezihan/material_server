@@ -90,9 +90,7 @@ const usermaterial = async (req: any, res: any) => {
 // 上传素材
 const upMaterial = async (req: any, res: any) => {
     const userMsg = req.userMsg
-    let { scene_desc, type, tag_arr } = req.query
-    tag_arr = [1,2,3,4]
-    scene_desc = '艺术植物生活头像'
+    let { scene_desc, type, tag_arr } = JSON.parse(req.query)
     if (type == '' || type == undefined || type < 1 || type > 2 || Array.isArray(tag_arr) == false) {
         res.send({data: [], meta: { msg: '请求参数错误', status: 404 }})
         return

@@ -99,5 +99,32 @@ module.exports = {
             return false
         }
         return result.insertId
+    },
+    // 获取素材 （推荐）筛选了封号的用户
+    async getAllMateria(type: number, start: number, limit: number):Promise<number | Array<object>> {
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        const sql = Number(type) === 3 ? 
+        `SELECT * FROM material WHERE user_id NOT IN (SELECT id FROM users WHERE user_type = 1) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`:
+        `SELECT * FROM material WHERE type = ${type} AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`;
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 素材id数组批量获取
+    async queryMateria(Arr: Array<number>, type: number, start: number, limit: number) {
+        if (Arr.length == 0) {
+            return []
+        }
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        const sql = Number(type) === 3 ? 
+        `SELECT * FROM material WHERE user_id NOT IN (SELECT id FROM users WHERE user_type = 1) AND id IN (${Arr}) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`:
+        `SELECT * FROM material WHERE type = ${type} AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1) AND id IN (${Arr}) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`;
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
     }
 }

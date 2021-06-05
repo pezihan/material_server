@@ -33,5 +33,11 @@ router.post('/upMaterial', UserMaterial.upMaterial)
 
 // 获取分类标签
 router.get('/classify', HomeMaterial.classify)
+// 获取推荐
+router.get('/recommend', HomeMaterial.recommend)
+// 获取分类素材
+router.get('/sort', HomeMaterial.sort)
+// 搜索
+router.get('/search', HomeMaterial.search)
 
 module.exports = router;
