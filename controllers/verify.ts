@@ -10,7 +10,7 @@ module.exports = async function(req:any, res:any, next:any) {
     }
     console.log(`${new Date().toLocaleString()} - 请求方式：${req.method} - 请求路径：${req.path} - IP地址：${login_ip}`);
     // 那些路径不需要token
-    const path: Array<string> = ['/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/usermaterial','/user/classify','/user/recommend','/user/sort','user/userMsg']
+    const path: Array<string> = ['/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/classify']
     let index = -1
     for (let i = 0; i < path.length; i++) {
         index = req.path.search(path[i])
@@ -19,7 +19,8 @@ module.exports = async function(req:any, res:any, next:any) {
     if (index !== -1) {
         next() // 不用验证token的接口
     } else if (req.path.search('/user') !== -1) { // 用户端验证
-        if (req.path.search('/user/search') !== -1) {
+        if (req.path.search('/user/search') !== -1 || req.path.search('/user/sort') !== -1 || req.path.search('/user/recommend') !== -1 
+        || req.path.search('/user/usermaterial') !== -1 || req.path.search('user/userMsg') !== -1 ) {
             if (req.headers.authorization == undefined || req.headers.authorization == null || req.headers.authorization == '') {
                 next()
                 return

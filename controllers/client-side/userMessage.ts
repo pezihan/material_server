@@ -138,6 +138,12 @@ const userMsg = async (req: any, res: any) => {
         res.send({data: {}, meta: { msg: '服务器错误', status: 500 }})
         return
     }
+    // 查询此人是否有关注
+    const userHoldMsg = req.userMsg != undefined ? await UserDB.allholdList(req.userMsg.id, user_id) : []
+    if (userHoldMsg == 500) {
+        res.send({data: {}, meta: { msg: '服务器错误', status: 500 }})
+        return
+    }
     const data = {
         id: userMsg[0].id,
         user_image: userMsg[0].user_image,
@@ -148,7 +154,8 @@ const userMsg = async (req: any, res: any) => {
         signature: userMsg[0].signature,
         user_type: userMsg[0].user_type,
         fansSum: result.sum.fans,
-        holdSum: result.sum.hold
+        holdSum: result.sum.hold,
+        hold: userHoldMsg.length == 0 ? false : true
     }
     res.send({data: data, meta: { msg: '获取成功', status: 200 }})
 }
@@ -281,6 +288,45 @@ const holdlist = async (req: any, res: any)  => {
     res.send({data: { userList: data, fansSum: result.sum.fans, holdSum: result.sum.hold }, meta: { msg: '获取成功', status: 200 }})
 }
 
+// 关注与取消关注
+const hold = async (req: any, res: any) => {
+    const { user_id } = req.query
+    if (user_id == "" || user_id == undefined) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    // 查询此用户是否存在
+    const userListMsg = await UserDB.getIdUserMsg(user_id)
+    if (userListMsg == 500) {
+        res.send({data: [], meta: { msg: '操作失败', status: 500 }})
+        return
+    } else if (userListMsg.length == 0) {
+        res.send({data: [], meta: { msg: '此用户不存在或已注销', status: 404 }})
+        return
+    }
+    let result;
+    // 查询此用户目前是关注还是没有关注
+    const msg = await UserDB.allholdList (req.userMsg.id, user_id)
+    if (msg == 500) {
+        res.send({data: [], meta: { msg: '操作失败', status: 500 }})
+        return
+    } else if (msg.length == 0) {
+        // 没有关注过
+        result = await UserDB.addHoldMsg(req.userMsg.id, user_id)
+    } else {
+        // 已经关注过 （删除）
+        result = await UserDB.removeHoldMsg(req.userMsg.id, user_id)
+    }
+    if (result == 500) {
+        res.send({data: [], meta: { msg: '操作失败', status: 500 }})
+        return
+    } else if (result == false) {
+        res.send({data: [], meta: { msg: '操作失败', status: 400 }})
+        return
+    }
+    res.send({data: [], meta: { msg: msg.length == 0 ? '已关注' : '已取消关注', status: 200 }})
+}
+
 module.exports = {
     test,
     verify,
@@ -291,5 +337,6 @@ module.exports = {
     upUserImages,
     setUserMsg,
     background,
-    holdlist
+    holdlist,
+    hold
 }

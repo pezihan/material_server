@@ -45,10 +45,21 @@ const recommend = async (req: any, res: any) => {
         res.send({data: [], meta: { msg: '获取失败', status: 500 }})
         return
     }
+    // 获取我所有点赞的素材
+    let likeScene:any = [] 
+    if (req.userMsg !== undefined) { // 用户是登录访问的
+        likeScene = await MaterialDB.queryLikeList(req.userMsg.id)
+        if (likeScene == 500) {
+            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+            return
+        }
+    }
     result.forEach((item: any, index: number) => {
         item.likeSum = 0
         item.collectSum = 0
         item.commentSum = 0
+        item.like = likeScene.length == 0 ? false : likeScene.some((v: any) => v.scene_id == item.id && v.type == 1)
+        item.collect = likeScene.length == 0 ? false :  likeScene.some((v: any) => v.scene_id == item.id && v.type == 2)
         item.userMsg = {}
         const i = userMessage.findIndex((v: any) => v.id == item.user_id)
         if (i != -1) {
@@ -116,10 +127,21 @@ const sort = async (req: any, res: any) => {
         res.send({data: [], meta: { msg: '获取失败', status: 500 }})
         return
     }
+    // 获取我所有点赞的素材
+    let likeScene:any = [] 
+    if (req.userMsg !== undefined) { // 用户是登录访问的
+        likeScene = await MaterialDB.queryLikeList(req.userMsg.id)
+        if (likeScene == 500) {
+            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+            return
+        }
+    }
     result.forEach((item: any, index: number) => {
         item.likeSum = 0
         item.collectSum = 0
         item.commentSum = 0
+        item.like = likeScene.length == 0 ? false : likeScene.some((v: any) => v.scene_id == item.id && v.type == 1)
+        item.collect = likeScene.length == 0 ? false :  likeScene.some((v: any) => v.scene_id == item.id && v.type == 2)
         item.userMsg = {}
         const i = userMessage.findIndex((v: any) => v.id == item.user_id)
         if (i != -1) {
@@ -232,10 +254,21 @@ const search = async (req: any, res: any) => {
             res.send({data: [], meta: { msg: '获取失败', status: 500 }})
             return
         }
+        // 获取我所有点赞的素材
+        let likeScene:any = [] 
+        if (req.userMsg !== undefined) { // 用户是登录访问的
+            likeScene = await MaterialDB.queryLikeList(req.userMsg.id)
+            if (likeScene == 500) {
+                res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+                return
+            }
+        }
         result.forEach((item: any, index: number) => {
             item.likeSum = 0
             item.collectSum = 0
             item.commentSum = 0
+            item.like = likeScene.length == 0 ? false : likeScene.some((v: any) => v.scene_id == item.id && v.type == 1)
+            item.collect = likeScene.length == 0 ? false :  likeScene.some((v: any) => v.scene_id == item.id && v.type == 2)
             item.userMsg = {}
             const i = userMessage.findIndex((v: any) => v.id == item.user_id)
             if (i != -1) {

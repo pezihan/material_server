@@ -3,6 +3,7 @@ var MaterialDB = require('../../modules/MaterialDB')
 var Mulet = require('../../util/multerconfig')
 var TagDB = require('../../modules/TagDB')
 var makeTag = require('../../lib/makeTag')
+var CommentBD = require('../../modules/CommentDB')
 
 // 获取用户的主页素材
 const usermaterial = async (req: any, res: any) => {
@@ -50,10 +51,21 @@ const usermaterial = async (req: any, res: any) => {
         res.send({data: [], meta: { msg: '数据库查询失败', status: 500 }})
         return
     }
+    // 获取我所有点赞的素材
+    let likeScene:any = [] 
+    if (req.userMsg !== undefined) { // 用户是登录访问的
+        likeScene = await MaterialDB.queryLikeList(req.userMsg.id)
+        if (likeScene == 500) {
+            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+            return
+        }
+    }
     result.forEach((element:any) => {
         element.likeSum = 0
         element.collectSum = 0
         element.commentSum = 0
+        element.like = likeScene.length == 0 ? false : likeScene.some((v: any) => v.scene_id == element.id && v.type == 1)
+        element.collect = likeScene.length == 0 ? false :  likeScene.some((v: any) => v.scene_id == element.id && v.type == 2)
         element.userMsg = {}
         const i = userMsg.findIndex((v: any) => v.id == element.user_id)
         if (i !== -1) {
@@ -92,7 +104,7 @@ const upMaterial = async (req: any, res: any) => {
     const userMsg = req.userMsg
     let { scene_desc, type, tag_arr } = JSON.parse(req.query)
     if (type == '' || type == undefined || type < 1 || type > 2 || Array.isArray(tag_arr) == false) {
-        res.send({data: [], meta: { msg: '请求参数错误', status: 404 }})
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
         return
     }
     req.storagePath = type == 1 ? 'material_images' : 'material_video'
@@ -141,7 +153,118 @@ const upMaterial = async (req: any, res: any) => {
     })
 }
 
+// 点赞与收藏
+const likeCollet = async (req: any, res: any) => {
+    const { scene_id, type } = req.query
+    if (scene_id == '' || scene_id == undefined || type == '' || type == undefined || type < 1 || type > 2) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    let result;
+    // 查询此素材是否存在
+    const sceneMsg = await MaterialDB.getArrUserMaterial([scene_id])
+    if (sceneMsg == 500) {
+        res.send({data: [], meta: { msg: '操作失败', status: 404 }})
+        return
+    } else if (sceneMsg.length == 0) {
+        res.send({data: [], meta: { msg: '未查询到此素材', status: 404 }})
+        return
+    }
+    // 查询是否有点赞或2收藏
+    const msg = await MaterialDB.queryLikeCollet(req.userMsg.id, scene_id, type)
+    if (msg == 500) {
+        res.send({data: [], meta: { msg: '操作失败', status: 500 }})
+        return
+    } else if (msg.length == 0) {
+        // 点赞或收藏
+        result = await MaterialDB.addRecord(req.userMsg.id, scene_id, sceneMsg[0].user_id, type)
+    } else {
+        // 取消点赞或收藏
+        result = await MaterialDB.removeRecord(req.userMsg.id, scene_id, type)
+    }
+    if (result == 500 || result == false) {
+        res.send({data: [], meta: { msg: '操作失败', status: 500 }})
+        return
+    }
+    res.send({data: [], meta: { msg: '已完成', status: 200 }})
+}
+
+// 删除素材
+const deleteMaterial = async (req: any, res: any) => {
+    const { scene_id } = req.query
+    if (scene_id == '' || scene_id == undefined) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    const result = await MaterialDB.deleteUserMaterial(req.userMsg.id, scene_id)
+    if (result == 500 || result == false) {
+        res.send({data: [], meta: { msg: '删除失败', status: 400 }})
+        return
+    }
+    res.send({data: [], meta: { msg: '删除成功', status: 200 }})
+}
+
+// 评论素材
+const comment = async (req: any, res: any) => {
+    const { scene_id, comment_text } = req.body
+    if (scene_id == '' || scene_id == undefined || comment_text == '' || comment_text == undefined) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    // 查询此素材是否存在
+    const sceneMsg = await MaterialDB.getArrUserMaterial([scene_id])
+    if (sceneMsg == 500) {
+        res.send({data: [], meta: { msg: '操作失败', status: 500 }})
+        return
+    } else if (sceneMsg.length == 0) {
+        res.send({data: [], meta: { msg: '未查询到此素材', status: 404 }})
+        return
+    }
+    // 保存到数据库中
+    const result = await CommentBD.setUserComment (scene_id, req.userMsg.id, comment_text, sceneMsg[0].user_id)
+    if (result == 500) {
+        res.send({data: [], meta: { msg: '评论失败', status: 500 }})
+        return
+    } else if (result == 400) {
+        res.send({data: [], meta: { msg: '评论失败', status: 400 }})
+        return
+    }
+    res.send({data: [], meta: { msg: '评论成功', status: 200 }})
+}
+
+// 回复评论 （二级评论）
+const reply = async (req: any, res:any) => {
+    const { comment_id, comment_text } = req.body
+    if (comment_id == '' || comment_id == undefined || comment_text == '' || comment_text == undefined) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    // 查询一级评论是否存在
+    const commentMsg = await CommentBD.queryOneCommentMsg(comment_id)
+    if (commentMsg == 500) {
+        res.send({data: [], meta: { msg: '评论失败', status: 500 }})
+        return
+    } else if (commentMsg.length == 0) {
+        res.send({data: [], meta: { msg: '未查询到此条评论', status: 404 }})
+        return
+    }
+    // 保存到数据库中
+    const result = await CommentBD.setUserTwoComment(comment_id, req.userMsg.id, comment_text, commentMsg[0].user_id)
+    if (result == 500) {
+        res.send({data: [], meta: { msg: '评论失败', status: 500 }})
+        return
+    } else if (result == 400) {
+        res.send({data: [], meta: { msg: '评论失败', status: 400 }})
+        return
+    }
+    res.send({data: [], meta: { msg: '评论成功', status: 200 }})
+}
+
 module.exports ={
     usermaterial,
-    upMaterial
+    upMaterial,
+    likeCollet,
+    deleteMaterial,
+    comment,
+    reply
 }

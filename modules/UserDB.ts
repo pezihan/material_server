@@ -148,5 +148,40 @@ module.exports = {
             return 500
         }
         return result
+    },
+    // 用户id查询此用户关注的某个人
+    async allholdList (user_id: number, hold_id: number) {
+        const sql = `SELECT * FROM user_hold WHERE user_id = ? AND hold_id= ?`
+        const sqlArr = [user_id, hold_id]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 添加关注数据
+    async addHoldMsg(user_id: number, hold_id: number) {
+        const hold_time = new Date().getTime()
+        const sql = `INSERT INTO user_hold (user_id, hold_id, hold_time) VALUES (?,?,?)`
+        const sqlArr = [user_id, hold_id, hold_time]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 删除关注数据
+    async removeHoldMsg (user_id: number, hold_id: number) {
+        const sql =`DELETE FROM user_hold WHERE user_id = ? AND hold_id = ?`
+        const sqlArr = [user_id, hold_id]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
     }
 }

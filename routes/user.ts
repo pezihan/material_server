@@ -25,11 +25,21 @@ router.post('/setUserMsg', UserMessage.setUserMsg)
 router.post('/background', UserMessage.background)
 // 获取用户粉丝与关注列表
 router.get('/holdlist', UserMessage.holdlist)
+// 关注与取消关注
+router.put('/hold', UserMessage.hold)
 
 // 获取用户素材
 router.get('/usermaterial', UserMaterial.usermaterial)
 // 上传素材
 router.post('/upMaterial', UserMaterial.upMaterial)
+// 点赞与收藏
+router.put('/likeCollet', UserMaterial.likeCollet)
+// 删除素材
+router.delete('/deleteMaterial', UserMaterial.deleteMaterial)
+// 评论素材
+router.post('/comment', UserMaterial.comment)
+// 回复评论
+router.post('/reply', UserMaterial.reply)
 
 // 获取分类标签
 router.get('/classify', HomeMaterial.classify)

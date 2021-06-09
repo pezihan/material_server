@@ -4,7 +4,7 @@ module.exports = {
     // 获取图片或视频素材
     async getUserMaterial (user_id: number, type: number, start: number, limit: number):Promise<number | Array<object>> {
         const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
-        const sql = `SELECT * FROM material WHERE user_id = ? AND type = ? ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+        const sql = `SELECT * FROM material WHERE user_id = ? AND type = ? AND state = 1 ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
         const sqlArr = [user_id, type]
         const result = await SySqlConnect(sql, sqlArr)
         if (result === undefined) {
@@ -28,7 +28,7 @@ module.exports = {
         if (arr.length === 0) {
             return []
         }
-        const sql = `SELECT * FROM material WHERE id IN (${arr})`
+        const sql = `SELECT * FROM material WHERE id IN (${arr}) AND state = 1`
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
@@ -119,12 +119,68 @@ module.exports = {
         }
         const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
         const sql = Number(type) === 3 ? 
-        `SELECT * FROM material WHERE user_id NOT IN (SELECT id FROM users WHERE user_type = 1) AND id IN (${Arr}) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`:
-        `SELECT * FROM material WHERE type = ${type} AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1) AND id IN (${Arr}) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`;
+        `SELECT * FROM material WHERE user_id NOT IN (SELECT id FROM users WHERE user_type = 1) AND id IN (${Arr}) AND state = 1 ORDER BY up_time DESC LIMIT ${pageSize},${limit}`:
+        `SELECT * FROM material WHERE type = ${type} AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1) AND id IN (${Arr}) AND state = 1 ORDER BY up_time DESC LIMIT ${pageSize},${limit}`;
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
         }
         return result
+    },
+    // 查询一个用户所有的点赞与收藏
+    async queryLikeList (user_id: number) {
+        const sql = `SELECT * FROM material_list_amount WHERE id = ${user_id}`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 查询某个用户是否点赞或收藏
+    async queryLikeCollet(user_id: number, scene_id: number, type: number) {
+        const sql = `SELECT * FROM material_list_amount WHERE user_id = ? AND scene_id = ? AND type = ?`
+        const sqlArr = [user_id, scene_id, type]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 添加点赞或收藏记录
+    async addRecord (user_id: number, scene_id: number, receive_id: number, type: number) {
+        const like_time = new Date().getTime()
+        const sql = `INSERT INTO material_list_amount (user_id, scene_id, receive_id, like_time, type) VALUES (?,?,?,?,?)`
+        const sqlArr = [user_id, scene_id, receive_id, like_time, type]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 移除收藏点赞记录
+    async removeRecord(user_id: number, scene_id: number, type: number) {
+        const sql =`DELETE FROM material_list_amount WHERE user_id = ? AND scene_id = ? AND type = ?`
+        const sqlArr = [user_id, scene_id, type]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 修改素材为删除状态
+    async deleteUserMaterial(user_id: number, scene_id: number) {
+        const sql =  `UPDATE material SET state = 2 WHERE user_id = ? AND id = ?`
+        const sqlArr = [user_id, Number(scene_id)]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
     }
 }
