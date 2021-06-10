@@ -10,7 +10,7 @@ module.exports = async function(req:any, res:any, next:any) {
     }
     console.log(`${new Date().toLocaleString()} - 请求方式：${req.method} - 请求路径：${req.path} - IP地址：${login_ip}`);
     // 那些路径不需要token
-    const path: Array<string> = ['/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/classify']
+    const path: Array<string> = ['/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/classify', '/user/similarity', '/user/getComment', '/admin/login']
     let index = -1
     for (let i = 0; i < path.length; i++) {
         index = req.path.search(path[i])
@@ -19,8 +19,8 @@ module.exports = async function(req:any, res:any, next:any) {
     if (index !== -1) {
         next() // 不用验证token的接口
     } else if (req.path.search('/user') !== -1) { // 用户端验证
-        if (req.path.search('/user/search') !== -1 || req.path.search('/user/sort') !== -1 || req.path.search('/user/recommend') !== -1 
-        || req.path.search('/user/usermaterial') !== -1 || req.path.search('user/userMsg') !== -1 ) {
+        if (req.path.search('/user/search') !== -1 || req.path.search('/user/sort') !== -1 || req.path.search('/user/recommend') !== -1
+        || req.path.search('/user/usermaterial') !== -1 || req.path.search('user/userMsg') !== -1 || req.path.search('user/particulars') !== -1) {
             if (req.headers.authorization == undefined || req.headers.authorization == null || req.headers.authorization == '') {
                 next()
                 return
@@ -35,9 +35,9 @@ module.exports = async function(req:any, res:any, next:any) {
         if (userKey.status === 'error') {
             res.send({data: {}, meta: { msg: 'token无效', status: 403 }})
         } 
-        // else if (userKey.data.time + 43200000 < new Date().getTime()) {   // token 12小时过期
-        //     res.send({data: {}, meta: { msg: 'token已过期,请重新登录', status: 403 }})
-        // } 
+        else if (userKey.data.time + 43200000 < new Date().getTime()) {   // token 12小时过期
+            res.send({data: {}, meta: { msg: 'token已过期,请重新登录', status: 403 }})
+        } 
         // 查询用户信息
         const result = await UserDB.getIdUserMsg(userKey.data.id)     
         if (result == 500) {

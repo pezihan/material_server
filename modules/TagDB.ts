@@ -112,5 +112,17 @@ module.exports = {
             return 500
         }
         return result
+    },
+    // 查询素材的标签
+    async querySceneTag (sceneArr: Array<number>) {
+        if (sceneArr.length == 0) {
+            return []
+        }
+        const sql = `SELECT * FROM scene_tag_relation WHERE scene_id IN (${sceneArr})`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
     }
 }

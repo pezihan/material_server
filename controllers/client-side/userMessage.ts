@@ -4,6 +4,7 @@ const VerifyPhone = require('../../lib/VerifyPhone')
 var UserDB = require('../../modules/UserDB')
 var Token = require('../../util/tokenconfig')
 var Mulet = require('../../util/multerconfig')
+var configKey = require('../../util/Key')
 var verifyPhone = new VerifyPhone()
 
 // 测试
@@ -108,11 +109,7 @@ const login = async (req: any, res: any) => {
 
 // 获取资源访问路径
 const resource = async (req: any, res: any) => {
-    const data = {
-        images: '/public/material_images/',
-        video: '/public/material_video/',
-        user_images: '/public/user_images/'
-    }
+    const data = configKey.visitPath
     res.send({data: data, meta: { msg: '获取成功', status: 200 }})
 }
 

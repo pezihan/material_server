@@ -1,6 +1,7 @@
 var UserDB = require('../../modules/UserDB')
 var MaterialDB = require('../../modules/MaterialDB')
 var TagDB = require('../../modules/TagDB')
+var CommentBD = require('../../modules/CommentDB')
 // 载入模块
 var Segment = require('node-segment').Segment;
 // 创建实例
@@ -89,7 +90,7 @@ const recommend = async (req: any, res: any) => {
         if (commentIndex !== -1) {
             item.commentSum = statistics.comment[commentIndex]['COUNT(scene_id)']
         }
-    });
+    })
     res.send({data: result,meta:{msg: '获取成功',status: 200}})
 }
 
@@ -311,6 +312,7 @@ const hotSearch = async (req: any, res: any) => {
     const { limit } = req.query
     if (limit == '') {
         res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
     }
     const result = await TagDB.getHotSearch(1, limit)
     if (result == 500) {
@@ -320,10 +322,186 @@ const hotSearch = async (req: any, res: any) => {
     res.send({data: result, meta: { msg: '获取成功', status: 200 }})
 }
 
+// 素材详细页面
+const particulars = async (req: any, res: any) => {
+    const { scene_id } = req.query
+    if (scene_id == '' || scene_id == undefined) {
+        res.send({data: {}, meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    // 查询素材信息
+    const sceneMsg = await MaterialDB.getArrUserMaterial([scene_id])
+    if (sceneMsg === 500) {
+        res.send({data: {}, meta: { msg: '获取失败', status: 500 }})
+        return
+    } else if (sceneMsg.length === 0) {
+        res.send({data: {}, meta: { msg: '素材不存在', status: 404 }})
+        return
+    }
+    // 获取素材评论、点赞、收藏数量
+    const statistics = await MaterialDB.getMaterialSum([sceneMsg[0].id])
+    if (statistics === 500) {
+        res.send({data: [], meta: { msg: '数据库查询失败', status: 500 }})
+        return
+    }
+    // 获取用户信息
+    const userRes = await UserDB.getIdUserMsg(sceneMsg[0].user_id)
+    if (userRes == 500) {
+        res.send({data: [], meta: { msg: '数据库查询失败', status: 500 }})
+        return
+    } else if (userRes.length == 0) {
+        res.send({data: [], meta: { msg: '未查到此用户', status: 404 }})
+        return
+    }
+    // 获取我所有点赞的素材
+    let likeScene:any = [] 
+    if (req.userMsg !== undefined) { // 用户是登录访问的
+        likeScene = await MaterialDB.queryLikeList(req.userMsg.id)
+        if (likeScene == 500) {
+            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+            return
+        }
+    }
+    const data = {
+        ...sceneMsg[0],
+        // 点赞数量
+        likeSum: statistics.like[0]['COUNT(scene_id)'],
+        // 收藏数量
+        collectSum: statistics.collect[0]['COUNT(scene_id)'],
+        // 评论数量
+        commentSum: statistics.comment[0]['COUNT(scene_id)'],
+        like: likeScene.length == 0 ? false : likeScene.some((v: any) => v.scene_id == sceneMsg[0].id && v.type == 1),
+        collect: likeScene.length == 0 ? false :  likeScene.some((v: any) => v.scene_id == sceneMsg[0].id && v.type == 2),
+        userMsg: {
+            id: userRes[0].id,
+            user_image: userRes[0].user_image,
+            user_name: userRes[0].user_name,
+            phone: userRes[0].phone,
+            sex: userRes[0].sex,
+            region: userRes[0].region,
+            signature: userRes[0].signature,
+            user_type: userRes[0].user_type
+        }
+    }
+    res.send({data: data,meta:{msg: '获取成功',status: 200}})
+}
+
+// 获取素材类似推荐
+const similarity = async (req: any, res: any) => {
+    const { scene_id } = req.query
+    if (scene_id == '' || scene_id == undefined) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    let result = []
+    // 查询素材信息
+    const sceneMsg = await MaterialDB.getArrUserMaterial([scene_id])
+    if (sceneMsg === 500) {
+        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        return
+    } else if (sceneMsg.length === 0) {
+        res.send({data: [], meta: { msg: '素材不存在', status: 404 }})
+        return
+    }
+    // 查找素材标签
+    const tagMsg = await TagDB.querySceneTag([scene_id])
+    if (tagMsg == 500) {
+        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        return
+    } else if (tagMsg.length == 0) {
+        // 没有相似推荐
+        result = await MaterialDB.getAllMateria(3, 1, 4)
+    } else {
+        const sceneArr = tagMsg.map((v: any) => v.scene_id)
+        const resAwi = await MaterialDB.getArrUserMaterial(sceneArr)
+        result = resAwi.slice(0,4)
+    }
+    if (result == 500) {
+        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        return
+    }
+    // 获取素材的素材的点赞、收藏、评论数量
+    const materiaIdArr = result.map((v: any) => v.id)
+    const statistics = await MaterialDB.getMaterialSum(materiaIdArr)
+    if (statistics === 500) {
+        res.send({data: [], meta: { msg: '数据库查询失败', status: 500 }})
+        return
+    }
+    result.forEach((item: any, index: number) => {
+        item.likeSum = 0
+        item.collectSum = 0
+        item.commentSum = 0
+        // 点赞
+        const likeIndex = statistics.like.findIndex((v: any) => v.scene_id === item.id)
+        if (likeIndex !== -1) {
+            item.likeSum = statistics.like[likeIndex]['COUNT(scene_id)']
+        }
+        // 收藏
+        const collectIndex = statistics.collect.findIndex((v: any) => v.scene_id === item.id)
+        if (collectIndex !== -1) {
+            item.collectSum = statistics.collect[collectIndex]['COUNT(scene_id)']
+        }
+        // 评论
+        const commentIndex = statistics.comment.findIndex((v: any) => v.scene_id === item.id)
+        if (commentIndex !== -1) {
+            item.commentSum = statistics.comment[commentIndex]['COUNT(scene_id)']
+        }
+    })
+    res.send({data: result, meta:{msg: '获取成功',status: 200}})
+}
+
+// 获取素材评论
+const getComment = async (req: any, res: any) => {
+    const { scene_id, start, limit } = req.query
+    if (start == '' || start == undefined || limit == '' || limit == undefined || scene_id == '' || scene_id == undefined
+    || start < 1 || limit < 1) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    const oneComment =  await CommentBD.getOneComment(scene_id, start, limit)
+    if (oneComment == 500) {
+        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        return
+    }
+    // 查询二级评论
+    const commentArr = oneComment.map((v: any) => v.id)
+    const twoComment = await CommentBD.getTwoComment(commentArr)
+    if (twoComment == 500) {
+        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        return
+    }
+    const userArr = [...oneComment.map((v: any) => v.user_id), ...twoComment.map((v: any) => v.user_id)]
+    const userMsgs = await UserDB.userArrMsg(userArr)
+    if (userMsgs == 500) {
+        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        return
+    }
+    oneComment.forEach((item1: any) => {
+        item1.commentTwo = []
+        const index1 = userMsgs.findIndex((i: any) => i.id == item1.user_id)
+        item1.user_name = userMsgs[index1].user_name
+        item1.user_image = userMsgs[index1].user_image
+        item1.sex = userMsgs[index1].sex
+        twoComment.forEach((item3: any) => {
+            if (item1.id == item3.comment_id) {
+                const index2 = userMsgs.findIndex((i: any) => i.id == item3.user_id)
+                item3.user_name = userMsgs[index2].user_name
+                item3.user_image = userMsgs[index2].user_image
+                item3.sex = userMsgs[index2].sex
+                item1.commentTwo.push(item3)
+            }
+        })
+    })
+    res.send({data: oneComment, meta:{msg: '获取成功',status: 200}})
+}
+
 module.exports = {
     classify,
     recommend,
     sort,
     search,
-    hotSearch
+    hotSearch,
+    particulars,
+    similarity,
+    getComment
 }

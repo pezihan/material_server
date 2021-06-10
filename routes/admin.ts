@@ -1,9 +1,8 @@
 var express = require('express');
+const AdminMessage = require('../controllers/admin-side/adminMessage')
 var router = express.Router();
 
-/* GET home page. */
-router.get('/', function(req: any, res:any) {
-  res.render('index', { title: 'Express' });
-});
+/* 管理员登录. */
+router.post('/login', AdminMessage.adminLogin)
 
 module.exports = router;

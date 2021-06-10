@@ -35,5 +35,27 @@ module.exports = {
             return false
         }
         return true
+    },
+    // 获取一级评论
+    async getOneComment (scene_id: number, start: number, limit: number) {
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        const sql = `SELECT * FROM user_one_comment WHERE scene_id = ${scene_id} ORDER BY comment_time DESC LIMIT ${pageSize},${limit}`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 获取二级评论
+    async getTwoComment(commentArr: Array<number>) {
+        if (commentArr.length == 0) {
+            return []
+        }
+        const sql = `SELECT * FROM user_two_comment WHERE comment_id IN (${commentArr}) ORDER BY comment_time DESC`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
     }
 }

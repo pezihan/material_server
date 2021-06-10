@@ -23,7 +23,7 @@ module.exports = {
         }
         return result
     },
-    // 素材id查询素材
+    // 素材id数组查询素材
     async getArrUserMaterial (arr: Array<number>):Promise<number | Array<object>>  {
         if (arr.length === 0) {
             return []

@@ -51,5 +51,11 @@ router.get('/sort', HomeMaterial.sort)
 router.get('/search', HomeMaterial.search)
 // 获取热搜
 router.get('/hotSearch', HomeMaterial.hotSearch)
+// 素材详情
+router.get('/particulars', HomeMaterial.particulars)
+// 素材类似推荐
+router.get('/similarity', HomeMaterial.similarity)
+// 素材评论获取
+router.get('/getComment', HomeMaterial.getComment)
 
 module.exports = router;
