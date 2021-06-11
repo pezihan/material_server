@@ -30,22 +30,28 @@ module.exports = async function(req:any, res:any, next:any) {
         const token = req.headers.authorization 
         if (!token) {
             res.send({data: {}, meta: { msg: 'NO token', status: 403 }})
+            return
         }
         const userKey = Token.de(token)
         if (userKey.status === 'error') {
             res.send({data: {}, meta: { msg: 'token无效', status: 403 }})
+            return
         } 
         else if (userKey.data.time + 43200000 < new Date().getTime()) {   // token 12小时过期
             res.send({data: {}, meta: { msg: 'token已过期,请重新登录', status: 403 }})
+            return
         } 
         // 查询用户信息
         const result = await UserDB.getIdUserMsg(userKey.data.id)     
         if (result == 500) {
             res.send({data: {}, meta: { msg: '服务器错误', status: 500 }})
+            return
         } else if (result.length === 0) {
             res.send({data: {}, meta: { msg: '无此用户', status: 404 }})
+            return
         } else if (result[0].user_type == 1) {
             res.send({data: {}, meta: { msg: '账号违规已封号', status: 403 }})
+            return
         } else {
             req.userMsg = result[0]
             next()

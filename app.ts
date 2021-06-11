@@ -8,7 +8,7 @@ const verifyPath = require('./controllers/verify')
 const cors = require('cors') // 跨域插件
 const app = express();
 // 端口
-const port = 4000;
+const port = 5000;
 
 
 // 改写
@@ -27,7 +27,7 @@ app.use('/node_modules', express.static(path.join(__dirname, '../node_modules'))
 app.use(bodyParser.urlencoded({extended:true}))
 app.use(bodyParser.json());
 
-
+app.use('/web',express.static('./web'))
 app.use('/', verifyPath)
 app.use('/user', userRouter);
 app.use('/admin', adminRouter)

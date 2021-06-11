@@ -104,7 +104,7 @@ const login = async (req: any, res: any) => {
         res.send({data, meta: { msg: '请完善个人信息', status: 100 }})
         return
     }
-    res.send({ data, meta: { msg: '账号或密码错误', status: 200 }})
+    res.send({ data, meta: { msg: '登录成功', status: 200 }})
 }
 
 // 获取资源访问路径
