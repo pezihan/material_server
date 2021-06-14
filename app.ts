@@ -27,10 +27,11 @@ app.use('/node_modules', express.static(path.join(__dirname, '../node_modules'))
 app.use(bodyParser.urlencoded({extended:true}))
 app.use(bodyParser.json());
 
-app.use('/web',express.static('./web'))
+
 app.use('/', verifyPath)
 app.use('/user', userRouter);
 app.use('/admin', adminRouter)
+app.use('/',express.static('./web'))
 
 // 模板渲染
 app.engine('html',require('express-art-template'));

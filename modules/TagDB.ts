@@ -104,9 +104,9 @@ module.exports = {
         return true
     },
     // 查找关键字的数量
-    async getHotSearch(start: number = 1, limit: number = 8) {
+    async getHotSearch(start: number = 1, limit: number = 8, query: string = '') {
         const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
-        const sql = `SELECT keyword, count(1) AS counts FROM user_keyword GROUP BY keyword ORDER BY counts DESC LIMIT ${pageSize},${limit}`
+        const sql = `SELECT keyword, count(1) AS counts FROM user_keyword WHERE keyword LIKE '%${query}%' GROUP BY keyword ORDER BY counts DESC LIMIT ${pageSize},${limit}`
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
@@ -124,5 +124,98 @@ module.exports = {
             return 500
         }
         return result
+    },
+    // 标签名查询
+    async queryTagName (name: string) {
+        const sql = `SELECT * FROM scene_tag_category WHERE name = ?`
+        const SqlArr = [name]
+        const result = await SySqlConnect(sql, SqlArr)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 添加标签
+    async addtagName (name: string) {
+        const sql = `INSERT INTO scene_tag_category (name) VALUES (?)`
+        const SqlArr = [name]
+        const result = await SySqlConnect(sql, SqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 删除标签
+    async deletetag (id: number) {
+        const sql = `DELETE FROM scene_tag_category WHERE id = ${id}`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 删除搜索关键词
+    async deleteKeyword(keyword: string) {
+        const sql = `DELETE FROM user_keyword WHERE keyword = '${keyword}'`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 获取关键词
+    async getSearchList(start: number = 1, limit: number = 8, query: string = '') {
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        const sql = `SELECT keyword, count(1) AS counts FROM user_keyword WHERE keyword LIKE '%${query}%' GROUP BY keyword ORDER BY counts DESC LIMIT ${pageSize},${limit}`
+        const sql2 = `SELECT keyword, count(1) AS counts FROM user_keyword WHERE keyword LIKE '%${query}%' GROUP BY keyword`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        const result2 = await SySqlConnect(sql2)
+        if (result2 === undefined) {
+            return 500
+        }
+        return { data: result, sum: result2.length }
+    },
+    // 关键词数组删除
+    async deleteArrKeyword(keyword_arr: Array<string>) {
+        if (keyword_arr.length == 0) {
+            return false
+        }
+        let text = ''
+        keyword_arr.forEach((item: any, index: number) => {
+            if (index == keyword_arr.length - 1) {
+                text += `"${item}"`
+            } else {
+                text += `"${item}",`
+            }
+        })
+        const sql = `DELETE FROM user_keyword WHERE keyword IN (${text})`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 修改关键词
+    async setUserKeyword(newKeyword: string ,keyword: string) {
+        const sql =  `UPDATE user_keyword SET keyword = ? WHERE keyword = ?`
+        const sqlArr = [String(newKeyword), String(keyword)]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
     }
 }

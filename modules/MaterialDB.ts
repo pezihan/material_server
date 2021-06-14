@@ -182,5 +182,50 @@ module.exports = {
             return false
         }
         return true
+    },
+    // 获取用户作品数量
+    async adminUserMaterialSum(userArr: Array<number>) {
+        if (userArr.length === 0) {
+            return {
+                images: [],
+                video: []
+            }
+        }
+        let sql1 = ``
+        let sql2 = ``
+        // 点赞
+        userArr.forEach((item, index) => {
+            if (index !== userArr.length - 1) {
+                sql1 += `SELECT user_id,COUNT(user_id) FROM material WHERE user_id = ${item} AND type = 1 UNION ALL `
+                sql2 += `SELECT user_id,COUNT(user_id) FROM material WHERE user_id = ${item} AND type = 2 UNION ALL `
+            } else {
+                sql1 += `SELECT user_id,COUNT(user_id) FROM material WHERE user_id = ${item} AND type = 1`
+                sql2 += `SELECT user_id,COUNT(user_id) FROM material WHERE user_id = ${item} AND type = 2`
+            }
+        })
+        const result1 = await SySqlConnect(sql1)
+        if (result1 === undefined) {
+            return 500
+        }
+        const result2 = await SySqlConnect(sql2)
+        if (result2 === undefined) {
+            return 500
+        }
+        return {
+            images: result1,
+            video: result2
+        }
+    },
+    // 修改某个用户的所有素材为删除状态
+    async deleteSceneUser(user_id: number) {
+        const sql =  `UPDATE material SET state = 2 WHERE user_id = ?`
+        const sqlArr = [user_id]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
     }
 }

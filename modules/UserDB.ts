@@ -183,5 +183,88 @@ module.exports = {
             return false
         }
         return true
+    },
+    // 获取用户数量
+    async adminGetUser(query:string, start: number, limit:number) {
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        let sql = ''
+        let sql2 = ``
+        if (query == undefined || query == '' || query == null) {
+            sql = `SELECT id,user_image,user_name,phone,creat_time,sex,region,login_information,signature,user_type,background FROM users ORDER BY id DESC LIMIT ${pageSize},${limit}`
+            sql2 = `SELECT COUNT(*) FROM users`
+        } else {
+            sql = `SELECT id,user_image,user_name,phone,creat_time,sex,region,login_information,signature,user_type,background FROM users WHERE id Like '%${query}%' OR user_name Like '%${query}%' ORDER BY id DESC LIMIT ${pageSize},${limit}`
+            sql2 = `SELECT COUNT(*) FROM users WHERE id Like '%${query}%' OR user_name Like '%${query}%'`
+        }
+        const result = await SySqlConnect(sql)
+        if (result == undefined) {
+            return 500
+        }
+        const result2 = await SySqlConnect(sql2)
+        if (result == undefined) {
+            return 500
+        }
+        return { data: result, sum: result2[0]['COUNT(*)'] }
+    },
+    // 添加用户
+    async adminAddUser(user_image: string, user_name: string, sex: number, region: string, phone: number, password: string, signature: string) {
+        const time = new Date().getTime()
+        const sql = `INSERT INTO users (user_image, user_name, phone, creat_time, sex, region, password, login_information, signature, user_type) VALUES (?,?,?,?,?,?,?,?,?,?)`
+        const sqlArr = [user_image, user_name, phone, time, sex, region, password, time, signature, 0]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 修改用户信息
+    async adminSetUserMsg(user_id: number,user_image: string, user_name: string, sex: number, region: string, phone: number, signature: string = '') {
+        const sql = `UPDATE users SET user_image = ?, user_name = ?, sex = ?, region = ?, phone =?, signature = ? WHERE id = ?`
+        const sqlArr = [user_image, user_name, sex, region, phone, signature, user_id]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 修改用户密码
+    async adminSetPassword (user_id: number, password: string) {
+        const sql = `UPDATE users SET password = ? WHERE id = ?`
+        const sqlArr = [password, user_id]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 修改账户的状态
+    async setUserType(user_type: number, user_id:number) {
+        const sql = `UPDATE users SET user_type = ? WHERE id = ?`
+        const sqlArr = [user_type, user_id]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result == undefined) {
+            return 500
+        } else if(result.affectedRows == 0) {
+            return false
+        }
+        return true
+    },
+    // 删除用户
+    async deleteUser(user_id: number) {
+        const sql =`DELETE FROM users WHERE id = ?`
+        const sqlArr = [Number(user_id)]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
     }
 }

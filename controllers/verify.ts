@@ -1,5 +1,6 @@
 var Token = require('../util/tokenconfig')
 var UserDB = require('../modules/UserDB')
+var AdminUser = require('../modules/AdminUser')
 
 // 统一验证
 module.exports = async function(req:any, res:any, next:any) {    
@@ -57,7 +58,40 @@ module.exports = async function(req:any, res:any, next:any) {
             next()
         }
     } else if (req.path.search('/admin') !== -1) { // 管理员端验证
-        res.send('管理员端验证')
+        // 验证token
+        const token = req.headers.authorization 
+        if (!token) {
+            res.send({data: {}, meta: { msg: 'NO token', status: 403 }})
+            return
+        }
+        const userKey = Token.de(token)
+        if (userKey.status === 'error') {
+            res.send({data: {}, meta: { msg: 'token无效', status: 403 }})
+            return
+        } 
+        else if (userKey.data.time + 43200000 < new Date().getTime()) {   // token 12小时过期
+            res.send({data: {}, meta: { msg: 'token已过期,请重新登录', status: 403 }})
+            return
+        }
+        // 查询用户是否存在
+        const adminUserMsg = await AdminUser.getIdAdminUser(userKey.data.id)
+        if (adminUserMsg == 500) {
+            res.send({data: {}, meta: { msg: '服务器错误', status: 500 }})
+            return
+        } else if (adminUserMsg.length === 0) {
+            res.send({data: {}, meta: { msg: '无此用户', status: 404 }})
+            return
+        }
+        if (req.path.search('/admin/allAdminUser') !== -1 || req.path.search('/admin/addAdminUser') !== -1 || req.path.search('/admin/setAdminStatus') !== -1
+        || req.path.search('/admin/editAdmin') !== -1 || req.path.search('/admin/delAdmin') !== -1) {
+            if (adminUserMsg[0].status == 1) {
+                res.send({data: {}, meta: { msg: '账号不是管理员账号', status: 403 }})
+                return
+            }
+            next()
+        } else {
+            next()
+        }
     } else {
         next()
     }

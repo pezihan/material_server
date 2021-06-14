@@ -16,7 +16,7 @@ let storage1 =  multer.diskStorage({
     },
     filename: function (req: any, file: any, cb: any) {
         if (file) {
-            const user_id = req.userMsg.id
+            const user_id = req.userMsg == undefined ? 'admin' : req.userMsg.id
             const postfix = file.originalname.substring(file.originalname.lastIndexOf('.'), file.originalname.length)
             const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
             var changedName = md5((user_id + new Date().getTime())+ verifyInt + file.originalname) + postfix
