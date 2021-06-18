@@ -227,5 +227,74 @@ module.exports = {
             return false
         }
         return true
+    },
+    // 查找素材素材
+    async adminQueryMateriaList(query: string = '', type: number, start: number, limit: number) {
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        // 1 素材id、 2 用户id、 3 md5  5 已删除
+        let sql1,sql2;
+        if (query == '' && type != 5 || query == null && type != 5 || query == undefined && type != 5) {
+            sql1 = `SELECT * FROM material WHERE state = 1 ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+            sql2 = `SELECT COUNT(*) FROM material WHERE state = 1`
+        } else if (type == 1) {
+            sql1 = `SELECT * FROM material WHERE state = 1 AND id = '${query}' ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+            sql2 = `SELECT COUNT(*) FROM material WHERE state = 1 AND id = '${query}'`
+        } else if (type == 2) {
+            sql1 = `SELECT * FROM material WHERE state = 1 AND user_id = '${query}' ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+            sql2 = `SELECT COUNT(*) FROM material WHERE state = 1 AND user_id = '${query}'`
+        } else if (type == 3) {
+            sql1 = `SELECT * FROM material WHERE state = 1 AND md5 LIKE '%${query}%' ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+            sql2 = `SELECT COUNT(*) FROM material WHERE state = 1 AND md5 LIKE '%${query}%'`
+        } else if (type == 5) {
+            sql1 = `SELECT * FROM material WHERE state = 2 AND id = '${query}' OR state = 2 AND user_id = '${query}' OR state = 2 AND md5 LIKE '%${query}%' ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+            sql2 = `SELECT COUNT(*) FROM material WHERE state = 2 AND id = '${query}' OR state = 2 AND user_id = '${query}' OR state = 2 AND md5 LIKE '%${query}%'`
+        }
+        const result1 = await SySqlConnect(sql1)
+        if (result1 === undefined) {
+            return 500
+        }
+        const result2 = await SySqlConnect(sql2)
+        if (result2 === undefined) {
+            return 500
+        }
+        return { data: result1, sum: result2[0]['COUNT(*)'] }
+    },
+    // 素材id获取素材信息
+    async adminGetSceneList(IdArr: Array<number>, start: number, limit: number) {
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        const sql1 = `SELECT * FROM material WHERE id IN (${IdArr}) AND state = 1 ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+        const sql2 = `SELECT COUNT(*) FROM material WHERE id IN (${IdArr}) AND state = 1`
+        const result1 = await SySqlConnect(sql1)
+        if (result1 === undefined) {
+            return 500
+        }
+        const result2 = await SySqlConnect(sql2)
+        if (result2 === undefined) {
+            return 500
+        }
+        return { data: result1, sum: result2[0]['COUNT(*)'] }
+    },
+    // 素材id数组批量删除
+    async adminAllmaterial(scene_id_arr: Array<number>) {
+        const sql =  `UPDATE material SET state = 2 WHERE id IN (${scene_id_arr})`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 修改素材状态
+    async SetUserMaterialState(state: number, scene_id: number) {
+        const sql =  `UPDATE material SET state = ? WHERE id = ?`
+        const sqlArr = [state, Number(scene_id)]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
     }
 }

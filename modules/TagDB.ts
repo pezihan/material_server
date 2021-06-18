@@ -15,7 +15,7 @@ module.exports = {
     },
     // 写入标签
     async setScnenTag (scene_id: number, arr: Array<object>) {
-        let sql = `INSERT INTO scene_tag_relation (scene_id, tag_id, tag_name) VALUES `
+        let sql = `INSERT ignore INTO scene_tag_relation (scene_id, tag_id, tag_name) VALUES `
         if (arr.length == 0) {
             return true
         }
@@ -211,6 +211,26 @@ module.exports = {
         const sql =  `UPDATE user_keyword SET keyword = ? WHERE keyword = ?`
         const sqlArr = [String(newKeyword), String(keyword)]
         const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 标签下对应的素材id
+    async adminQuerySceneId(string: string) {
+        let sql = `SELECT * FROM scene_tag_relation WHERE tag_name LIKE '%${string}%'`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 删除素材的映射标签
+    async deleteSceneTag(id: number) {
+        const sql = `DELETE FROM scene_tag_relation WHERE id = ${id}`
+        const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
         } else if(result.affectedRows === 0) {

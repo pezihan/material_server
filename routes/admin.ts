@@ -2,6 +2,7 @@ var express = require('express');
 const AdminMessage = require('../controllers/admin-side/adminMessage')
 const AdminTag = require('../controllers/admin-side/adminTag')
 const AdminUsers = require('../controllers/admin-side/adminUser')
+const AdminMaterial = require('../controllers/admin-side/adminMaterial')
 var router = express.Router();
 
 /* 管理员登录. */
@@ -48,5 +49,19 @@ router.delete('/delkeyword', AdminUsers.delkeyword)
 router.post('/delkeyword', AdminUsers.delAllkeyword)
 // 修改关键词
 router.put('/setkeyword', AdminUsers.setkeyword)
+
+// 获取素材列表
+router.get('/getSceneList', AdminMaterial.getSceneList)
+// 批量删除素材
+router.delete('/deleteScene', AdminMaterial.deleteScene)
+// 修改素材状态
+router.put('/scenestatus', AdminMaterial.scenestatus)
+// 修改素材状态
+router.delete('/delsceneTag', AdminMaterial.delsceneTag)
+// 获取分类标签
+router.get('/sceneTagSearch', AdminMaterial.sceneTagSearch)
+// 给素材添加分类标签
+router.post('/addSceneTags', AdminMaterial.addSceneTags)
+
 
 module.exports = router;
