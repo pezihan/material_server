@@ -31,6 +31,7 @@ app.use(bodyParser.json());
 app.use('/', verifyPath)
 app.use('/user', userRouter);
 app.use('/admin', adminRouter)
+
 app.use('/',express.static('./web'))
 
 // 模板渲染

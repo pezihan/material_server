@@ -237,5 +237,19 @@ module.exports = {
             return false
         }
         return true
-    }
+    },
+    // 获取标签
+    async queryAndGetTag (string: string) {
+        let sql = ''
+        if (string == undefined || string == '' || string == null) {
+            sql = `SELECT * FROM scene_tag_category`
+        } else {
+            sql = `SELECT * FROM scene_tag_category WHERE name LIKE '%${string}%'`
+        }
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    } 
 }

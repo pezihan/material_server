@@ -11,7 +11,7 @@ module.exports = async function(req:any, res:any, next:any) {
     }
     console.log(`${new Date().toLocaleString()} - 请求方式：${req.method} - 请求路径：${req.path} - IP地址：${login_ip}`);
     // 那些路径不需要token
-    const path: Array<string> = ['/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/classify', '/user/similarity', '/user/getComment', '/admin/login']
+    const path: Array<string> = ['/public', '/node_modules', '/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/classify', '/user/similarity', '/user/getComment', '/admin/login']
     let index = -1
     for (let i = 0; i < path.length; i++) {
         index = req.path.search(path[i])

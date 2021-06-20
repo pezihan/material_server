@@ -3,6 +3,7 @@ const AdminMessage = require('../controllers/admin-side/adminMessage')
 const AdminTag = require('../controllers/admin-side/adminTag')
 const AdminUsers = require('../controllers/admin-side/adminUser')
 const AdminMaterial = require('../controllers/admin-side/adminMaterial')
+const AdminCrawler = require('../controllers/admin-side/adminCrawler')
 var router = express.Router();
 
 /* 管理员登录. */
@@ -63,5 +64,13 @@ router.get('/sceneTagSearch', AdminMaterial.sceneTagSearch)
 // 给素材添加分类标签
 router.post('/addSceneTags', AdminMaterial.addSceneTags)
 
+// 图片爬取请求
+router.get('/getImageReq', AdminCrawler.getImageReq)
+// 图片下载请求
+router.post('/setImagesReq', AdminCrawler.setImagesReq)
+// 视频爬取请求
+router.get('/getVideoReq', AdminCrawler.getVideoReq)
+// 视频下载请求
+router.post('/setVideoReq', AdminCrawler.setVideoReq)
 
 module.exports = router;

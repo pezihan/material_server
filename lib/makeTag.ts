@@ -9,7 +9,7 @@ var TagDB = require('../modules/TagDB')
 module.exports = {
     // 分词
     async participle (scene_id: number, str: string) {
-        const tagText = str.toString()
+        const tagText = String(str)
         let newTagText = ''
         for(let i = 0; i <= tagText.length;i++) {
             if(/^[\u4e00-\u9fa5]{0,}$/.test(tagText[i])) {

@@ -3,7 +3,7 @@ var MaterialDB = require('../../modules/MaterialDB')
 
 // 获取素材列表
 const getSceneList = async (req: any, res: any) => {
-    const { query, type, start, limit } = req.query
+    const { query, type, start, limit, sort } = req.query
     if (type == '' || type == undefined || type < 1 || type > 5 || start == '' || start == undefined ||
     start < 1 || limit == '' || limit == undefined || limit < 1) {
         res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
@@ -11,16 +11,16 @@ const getSceneList = async (req: any, res: any) => {
     }
     // 1 素材id、 2 用户id、 3 md5 4素材类别  5 已删除
     let scene = []
-    if (type !== 4 || query == '' || query == undefined || query == null) {
-        scene = await MaterialDB.adminQueryMateriaList(query, type, start, limit)
-    } else {
-        const sceneArr = await TagDB.adminQuerySceneId()
+    if (query != '' && query != undefined && query && null || type == 4) {
+        const sceneArr = await TagDB.adminQuerySceneId(query)
         if (sceneArr == 500) {
             res.send({data: [], meta: { msg: 'Server error', status: 500 }})
             return
         }
         const IdArr = sceneArr.map((v: any) => v.scene_id)
-        scene = await MaterialDB.adminGetSceneList(IdArr, start, limit)
+        scene = await MaterialDB.adminGetSceneList(IdArr, start, limit, sort)
+    } else {
+        scene = await MaterialDB.adminQueryMateriaList(query, type, start, limit, sort)
     }
     if (scene == 500) {
         res.send({data: [], meta: { msg: 'Server Error', status: 500 }})
@@ -126,11 +126,7 @@ const delsceneTag = async (req: any, res: any) => {
 // 查询分类标签
 const sceneTagSearch = async (req: any, res: any) => {
     const { query } = req.query
-    if (query == '' || query == undefined) {
-        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
-        return
-    }
-    const result = await TagDB.queryTag([query])
+    const result = await TagDB.queryAndGetTag(query)
     if (result == 500) {
         res.send({data: [], meta: { msg: 'Server error', status: 500 }})
         return
@@ -138,6 +134,7 @@ const sceneTagSearch = async (req: any, res: any) => {
     res.send({data: result, meta: { msg: '获取成功', status: 200 }})
 }
 
+// 添加素材分类标签
 const addSceneTags = async (req: any, res: any) => {
     const { scene_id, tagPitch } = req.body
     if (scene_id == '' || scene_id == undefined || tagPitch == '' || tagPitch == undefined || Array.isArray(tagPitch) == false) {
