@@ -178,8 +178,8 @@ const sort = async (req: any, res: any) => {
 
 // 搜索
 const search = async (req: any, res: any) => {
-    const { query, type, start, limit } = req.query
-    if (type == '' || type == undefined || type < 1 || type > 4 || start == '' || start == undefined || start < 1 || limit < 1 || limit == '' || limit == undefined) {
+    const { query, type, start, limit, state } = req.query
+    if (type == '' || type == undefined || type < 1 || type > 4 || start == '' || start == undefined || start < 1 || limit < 1 || limit == '' || limit == undefined || state == '' || state == undefined) {
         res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
         return
     } else if (query == '' || query == undefined) {
@@ -228,18 +228,27 @@ const search = async (req: any, res: any) => {
         });
         res.send({data: data,meta:{msg: '获取成功',status: 200}})
     } else {
-        // 素材
-        // 查询此标签的素材
-        const tagRes = await TagDB.querymaterialTag(queryArr)
-        if (tagRes == 500) {
-            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
-            return
-        }
-        const Arr = tagRes.map((v: any) => v.scene_id)
-        const result = await MaterialDB.queryMateria(Arr, type, start, limit)
-        if (result == 500) {
-            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
-            return
+        let result = []
+        if (state == 1) {
+            // 通过素材的描述去查询
+            result = await MaterialDB.searchTextScene(type, start, limit, query)
+            if (result == 500) {
+                res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+                return
+            }
+        } else if (state == 2) {
+            // 查询此标签的素材
+            const tagRes = await TagDB.querymaterialTag(queryArr)
+            if (tagRes == 500) {
+                res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+                return
+            }
+            const Arr = tagRes.map((v: any) => v.scene_id)
+            result = await MaterialDB.queryMateria(Arr, type, start, limit)
+            if (result == 500) {
+                res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+                return
+            }
         }
         // 获取素材的素材的点赞、收藏、评论数量
         const materiaIdArr = result.map((v: any) => v.id)
@@ -304,7 +313,7 @@ const search = async (req: any, res: any) => {
     }
     const user_id = req.userMsg == undefined ? 0 : req.userMsg.id
     // 将将关键词写入数据库
-    TagDB.setKeyword(queryArr, user_id)
+    TagDB.setKeyword([query], user_id)
 }
 
 // 热搜

@@ -109,7 +109,11 @@ const login = async (req: any, res: any) => {
 
 // 获取资源访问路径
 const resource = async (req: any, res: any) => {
-    const data = configKey.visitPath
+    let data:any = {}
+    // data.images = 'http://127.0.0.1:5000' + configKey.visitPath.images
+    // data.video = 'http://127.0.0.1:5000' + configKey.visitPath.video
+    // data.user_images = 'http://127.0.0.1:5000' + configKey.visitPath.user_images
+    data = configKey.visitPath
     res.send({data: data, meta: { msg: '获取成功', status: 200 }})
 }
 

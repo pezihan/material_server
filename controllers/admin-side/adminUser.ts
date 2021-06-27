@@ -41,10 +41,10 @@ const userList = async (req: any, res: any) => {
 // 获取资源访问路径
 const getPath = async (req: any, res: any) => {
     let data:any = {}
-    data.images = 'http://127.0.0.1:5000' + configKey.visitPath.images
-    data.video = 'http://127.0.0.1:5000' + configKey.visitPath.video
-    data.user_images = 'http://127.0.0.1:5000' + configKey.visitPath.user_images
-    // data = configKey.visitPath
+    // data.images = 'http://127.0.0.1:5000' + configKey.visitPath.images
+    // data.video = 'http://127.0.0.1:5000' + configKey.visitPath.video
+    // data.user_images = 'http://127.0.0.1:5000' + configKey.visitPath.user_images
+    data = configKey.visitPath
     res.send({data: data, meta: { msg: '获取成功', status: 200 }})
 }
 
@@ -67,7 +67,7 @@ const updateimage = async (req: any, res: any) => {
 const addVirtualUser = async (req: any, res: any) => {
     const { user_image, user_name, sex, region, phone, password, signature } = req.body
     if (user_image == '' || user_image == undefined || user_name == '' || user_name == undefined
-    || sex == '' || sex == undefined || region == '' || region == undefined || phone == ''
+    || sex == undefined || region == '' || region == undefined || phone == ''
     || phone == undefined || password == '' || password == undefined) {
         res.send({data: {}, meta: { msg: '请求参数错误', status: 403 }})
         return
@@ -251,6 +251,7 @@ const setkeyword = async (req: any, res: any) => {
     }
     res.send({data: {}, meta: { msg: '修改成功', status: 201 }})
 }
+
 
 module.exports = {
     userList,

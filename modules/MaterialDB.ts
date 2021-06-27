@@ -104,8 +104,8 @@ module.exports = {
     async getAllMateria(type: number, start: number, limit: number):Promise<number | Array<object>> {
         const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
         const sql = Number(type) === 3 ? 
-        `SELECT * FROM material WHERE user_id NOT IN (SELECT id FROM users WHERE user_type = 1) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`:
-        `SELECT * FROM material WHERE type = ${type} AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`;
+        `SELECT * FROM material WHERE state = 1 AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`:
+        `SELECT * FROM material WHERE type = ${type} AND state = 1 AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1) ORDER BY up_time DESC LIMIT ${pageSize},${limit}`;
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
@@ -338,5 +338,31 @@ module.exports = {
             return false
         }
         return result.insertId
+    },
+    // 搜索素材
+    async searchTextScene(type: number, start: number, limit: number, query: string) {
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        const sql = Number(type) === 3 ? 
+        `SELECT * FROM material WHERE user_id NOT IN (SELECT id FROM users WHERE user_type = 1) AND scene_desc LIKE '%${query}%' AND state = 1 ORDER BY up_time DESC LIMIT ${pageSize},${limit}`:
+        `SELECT * FROM material WHERE type = ${type} AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1) AND scene_desc LIKE '%${query}%' AND state = 1 ORDER BY up_time DESC LIMIT ${pageSize},${limit}`;
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 修改素材的用户所属
+    async setMateriaUser(scene_Arr: Array<number>, user_id: number) {
+        if (scene_Arr.length == 0) {
+            return 500
+        }
+        const sql =  `UPDATE material SET user_id = ${user_id} WHERE id IN (${scene_Arr})`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
     }
 }

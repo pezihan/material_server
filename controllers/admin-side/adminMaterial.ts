@@ -1,5 +1,6 @@
 var TagDB = require('../../modules/TagDB')
 var MaterialDB = require('../../modules/MaterialDB')
+var UserDB = require('../../modules/UserDB')
 
 // 获取素材列表
 const getSceneList = async (req: any, res: any) => {
@@ -175,11 +176,40 @@ const addSceneTags = async (req: any, res: any) => {
     res.send({data: [], meta: { msg: '添加成功', status: 201 }})
 }
 
+// 修改素材的所属用户
+const setSceneUser = async (req: any, res: any) => {
+    const { scene_Arr, user_id } = req.body
+    if (scene_Arr == '' || scene_Arr == undefined || Array.isArray(scene_Arr) == false || user_id == '' || user_id == undefined) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    // 查询是否有此用户
+    const userRes = await UserDB.getIdUserMsg(user_id)
+    if (userRes == 500) {
+        res.send({data: [], meta: { msg: 'server error', status: 500 }})
+        return
+    } else if (userRes.length == 0) {
+        res.send({data: [], meta: { msg: '此用户不存在', status: 404 }})
+        return
+    }
+    // 修改
+    const result = await MaterialDB.setMateriaUser(scene_Arr, user_id)
+    if (result == 500) {
+        res.send({data: [], meta: { msg: 'server error', status: 500 }})
+        return
+    } else if (result == false) {
+        res.send({data: [], meta: { msg: '修改失败', status: 400 }})
+        return
+    }
+    res.send({data: [], meta: { msg: '修改成功', status: 201 }})
+}
+
 module.exports = {
     getSceneList,
     deleteScene,
     scenestatus,
     delsceneTag,
     sceneTagSearch,
-    addSceneTags
+    addSceneTags,
+    setSceneUser
 }

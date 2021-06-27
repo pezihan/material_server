@@ -63,6 +63,8 @@ router.delete('/delsceneTag', AdminMaterial.delsceneTag)
 router.get('/sceneTagSearch', AdminMaterial.sceneTagSearch)
 // 给素材添加分类标签
 router.post('/addSceneTags', AdminMaterial.addSceneTags)
+// 修改素材的所属用户
+router.post('/setSceneUser', AdminMaterial.setSceneUser)
 
 // 图片爬取请求
 router.get('/getImageReq', AdminCrawler.getImageReq)

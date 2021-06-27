@@ -305,7 +305,7 @@ async function doenload (urlpath, title) {
     
     const fileName = md5(new Date().getTime() + title.trim() + videoMd5)
     // 创建cmd合并脚本
-    let cmdtext = iconvLite.encode(`copy /b *.ts ..\\private\\${fileName}.ts`,'gbk')
+    let cmdtext = iconvLite.encode(`copy /b *.ts ..\\private\\private\\${fileName}.ts`,'gbk')
     var writeStream = fs.createWriteStream(`${path}/${title.trim()}/merge.cmd`)
     writeStream.write(cmdtext)
     writeStream.end();
@@ -404,7 +404,7 @@ async function doenload (urlpath, title) {
     const up_time = new Date().getTime()
         const state = 1
             var sql = `INSERT INTO material (user_id, phone_path, video_path, md5, scene_desc, state, up_time, type, ks_id) VALUES (?,?,?,?,?,?,?,?,?)`
-            var sqlArr = [user_id, '', `private/${fileName}.mp4`, fileName, title, state, up_time, 2, videoMd5]
+            var sqlArr = [user_id, '', `private/${fileName}.mp4`, fileName, title.trim(), state, up_time, 2, videoMd5]
             var result = await SySqlConnect(sql, sqlArr)
             if (result === undefined) {
                 console.log('数据库写入失败，退出下载')

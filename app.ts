@@ -42,5 +42,5 @@ app.use(function(req:any,res:any){
 })
 
 server.listen(port,'0.0.0.0',function() {
-  console.log(`${new Date().toLocaleString()} - ` + `The server running ${port}...`);
+  console.log(`${new Date().toLocaleString()} - ` + `The server running ${port}...http://127.0.0.1:${port}`);
 });

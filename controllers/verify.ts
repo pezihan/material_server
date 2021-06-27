@@ -9,7 +9,7 @@ module.exports = async function(req:any, res:any, next:any) {
     if(login_ip.split(',').length>0){
         login_ip = login_ip.split(',')[0];
     }
-    console.log(`${new Date().toLocaleString()} - 请求方式：${req.method} - 请求路径：${req.path} - IP地址：${login_ip}`);
+    console.log(`${new Date().toLocaleString()} - request method：${req.method} - Request path：${req.path} - IP address ：${login_ip}`);
     // 那些路径不需要token
     const path: Array<string> = ['/public', '/node_modules', '/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/classify', '/user/similarity', '/user/getComment', '/admin/login']
     let index = -1
@@ -19,10 +19,10 @@ module.exports = async function(req:any, res:any, next:any) {
     }
     if (index !== -1) {
         next() // 不用验证token的接口
-    } else if (req.path.search('/user') !== -1) { // 用户端验证
+    } else if (req.path.search('/user/') !== -1) { // 用户端验证
         if (req.path.search('/user/search') !== -1 || req.path.search('/user/sort') !== -1 || req.path.search('/user/recommend') !== -1
         || req.path.search('/user/usermaterial') !== -1 || req.path.search('user/userMsg') !== -1 || req.path.search('user/particulars') !== -1) {
-            if (req.headers.authorization == undefined || req.headers.authorization == null || req.headers.authorization == '') {
+            if (req.headers.authorization == undefined || req.headers.authorization == null || req.headers.authorization == '' || req.headers.authorization == 'null') {
                 next()
                 return
             }
@@ -57,7 +57,7 @@ module.exports = async function(req:any, res:any, next:any) {
             req.userMsg = result[0]
             next()
         }
-    } else if (req.path.search('/admin') !== -1) { // 管理员端验证
+    } else if (req.path.search('/admin/') !== -1) { // 管理员端验证
         // 验证token
         const token = req.headers.authorization 
         if (!token) {
