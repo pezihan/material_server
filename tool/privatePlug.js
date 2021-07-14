@@ -5,6 +5,7 @@ const iconvLite = require('iconv-lite')
 const inquirer = require('inquirer')
 const mysql = require('mysql')
 const md5 = require('blueimp-md5')
+const nodepath = require('path')
 
 let pool = mysql.createPool({
     host: '127.0.0.1',
@@ -379,6 +380,17 @@ async function doenload (urlpath, title) {
             return
         }
         else console.log("合并脚本运行完成")
+        // 运ffmpeng转码
+        const Feeppath = nodepath.resolve(path)
+        child_process.exec(`ffmpeg -i "${Feeppath}/private/private/${fileName}.ts" -c copy ${Feeppath}/private/private/${fileName}.mp4`,function(error,stdout,stderr){
+            if(error !==null){
+                console.log("exec error"+error, '转码失败')
+            } else {
+                console.log('转码完成..');
+                // 删除ts视频
+                fs.unlinkSync(`${path}/private/private/${fileName}.ts`);
+            }
+        })
         // 删除文件夹
         let checkUrl = `${path}/${title.trim()}`　　　　//检查文件是否已经存在
         let reservePath = fs.existsSync(checkUrl)

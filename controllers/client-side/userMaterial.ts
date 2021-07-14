@@ -14,9 +14,14 @@ const usermaterial = async (req: any, res: any) => {
         return
     }
     let result = []
+    let state = 1
+    // 判断是否自己查看自己的主页素材，如果是自己可以看到自己违规的素材
+    if (req.userMsg.id == user_id) {
+        state = 2
+    }
     if (Number(type) !== 3) {
         // 图片视频
-        result = await MaterialDB.getUserMaterial(user_id, type, start, limit)
+        result = await MaterialDB.getUserMaterial(user_id, type, start, limit, state)
     } else {
         // 收藏
         const collect = await MaterialDB.getUserCollect(user_id, start, limit)

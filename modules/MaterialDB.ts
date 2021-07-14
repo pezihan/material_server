@@ -2,9 +2,13 @@ var { SySqlConnect } = require('../util/mysqlConfig')
 
 module.exports = {
     // 获取图片或视频素材
-    async getUserMaterial (user_id: number, type: number, start: number, limit: number):Promise<number | Array<object>> {
+    async getUserMaterial (user_id: number, type: number, start: number, limit: number, state: number = 1):Promise<number | Array<object>> {
         const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
-        const sql = `SELECT * FROM material WHERE user_id = ? AND type = ? AND state = 1 ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+        let state_text = `state = 1`
+        if (state != 1) {
+            state_text = ""
+        }
+        const sql = `SELECT * FROM material WHERE user_id = ? AND type = ? AND ${state_text} ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
         const sqlArr = [user_id, type]
         const result = await SySqlConnect(sql, sqlArr)
         if (result === undefined) {
@@ -28,7 +32,7 @@ module.exports = {
         if (arr.length === 0) {
             return []
         }
-        const sql = `SELECT * FROM material WHERE id IN (${arr}) AND state = 1`
+        const sql = `SELECT * FROM material WHERE id IN (${arr}) AND state = 1 AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1)`
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
@@ -129,7 +133,7 @@ module.exports = {
     },
     // 查询一个用户所有的点赞与收藏
     async queryLikeList (user_id: number) {
-        const sql = `SELECT * FROM material_list_amount WHERE id = ${user_id}`
+        const sql = `SELECT * FROM material_list_amount WHERE user_id = ${user_id}`
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
@@ -364,5 +368,26 @@ module.exports = {
             return false
         }
         return true
+    },
+    // 批量模糊查询用户文案
+    async participleQuery(textArr: Array<string>, scene_id: number,start: number, limit: number) {
+        const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
+        if (textArr.length == 0) {
+            return []
+        }
+        let sqlText = ''
+        textArr.forEach((item, index) => {
+            if (index === 0) {
+                sqlText += `scene_desc LIKE ('%${item}%') AND state = 1 AND id != ${scene_id} `
+            } else {
+                sqlText += `OR scene_desc LIKE ('%${item}%') AND state = 1 AND id != ${scene_id} `
+            }
+        })
+        const sql = `SELECT * FROM material WHERE ${sqlText} ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
     }
 }

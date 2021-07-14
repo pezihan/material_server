@@ -2,6 +2,7 @@ var UserDB = require('../../modules/UserDB')
 var MaterialDB = require('../../modules/MaterialDB')
 var TagDB = require('../../modules/TagDB')
 var CommentBD = require('../../modules/CommentDB')
+var { participleTxt } = require('../../lib/makeTag')
 // 载入模块
 var Segment = require('node-segment').Segment;
 // 创建实例
@@ -102,6 +103,15 @@ const sort = async (req: any, res: any) => {
         res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
         return
     }
+    // 查询此标签的名字
+    const tagMsg = await TagDB.getTagMsg([tag_id])
+    if (tagMsg == 500) {
+        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        return
+    } else if (tagMsg.length == 0) {
+        res.send({data: [], meta: { msg: '标签不存在', status: 404 }})
+        return
+    }
     // 查询此标签的素材
     const tagRes = await TagDB.getAllTagMateria(tag_id)
     if (tagRes == 500) {
@@ -173,7 +183,7 @@ const sort = async (req: any, res: any) => {
             item.commentSum = statistics.comment[commentIndex]['COUNT(scene_id)']
         }
     });
-    res.send({data: result,meta:{msg: '获取成功',status: 200}})
+    res.send({data: result,meta:{msg: '获取成功',tag_name: tagMsg[0].name, status: 200}})
 }
 
 // 搜索
@@ -346,6 +356,9 @@ const particulars = async (req: any, res: any) => {
     } else if (sceneMsg.length === 0) {
         res.send({data: {}, meta: { msg: '素材不存在', status: 404 }})
         return
+    } else if (sceneMsg[0].state == 2) {
+        res.send({data: {}, meta: { msg: '素材违规,禁止访问', status: 403 }})
+        return
     }
     // 获取素材评论、点赞、收藏数量
     const statistics = await MaterialDB.getMaterialSum([sceneMsg[0].id])
@@ -364,11 +377,20 @@ const particulars = async (req: any, res: any) => {
     }
     // 获取我所有点赞的素材
     let likeScene:any = [] 
+    let hold = false
     if (req.userMsg !== undefined) { // 用户是登录访问的
         likeScene = await MaterialDB.queryLikeList(req.userMsg.id)
         if (likeScene == 500) {
             res.send({data: [], meta: { msg: '获取失败', status: 500 }})
             return
+        }
+        // 查询是否关注此用户
+        const msg = await UserDB.allholdList (req.userMsg.id, sceneMsg[0].user_id)
+        if (msg == 500) {
+            res.send({data: [], meta: { msg: '操作失败', status: 500 }})
+            return
+        } else if (msg.length !== 0) {
+            hold = true
         }
     }
     const data = {
@@ -389,7 +411,8 @@ const particulars = async (req: any, res: any) => {
             sex: userRes[0].sex,
             region: userRes[0].region,
             signature: userRes[0].signature,
-            user_type: userRes[0].user_type
+            user_type: userRes[0].user_type,
+            hold: hold
         }
     }
     res.send({data: data,meta:{msg: '获取成功',status: 200}})
@@ -404,7 +427,7 @@ const similarity = async (req: any, res: any) => {
     }
     let result = []
     // 查询素材信息
-    const sceneMsg = await MaterialDB.getArrUserMaterial([scene_id])
+    const sceneMsg = await MaterialDB.getArrUserMaterial([scene_id]) 
     if (sceneMsg === 500) {
         res.send({data: [], meta: { msg: '获取失败', status: 500 }})
         return
@@ -412,22 +435,42 @@ const similarity = async (req: any, res: any) => {
         res.send({data: [], meta: { msg: '素材不存在', status: 404 }})
         return
     }
-    // 查找素材标签
-    const tagMsg = await TagDB.querySceneTag([scene_id])
-    if (tagMsg == 500) {
-        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
-        return
-    } else if (tagMsg.length == 0) {
-        // 没有相似推荐
-        result = await MaterialDB.getAllMateria(3, 1, 4)
-    } else {
-        const sceneArr = tagMsg.map((v: any) => v.scene_id)
-        const resAwi = await MaterialDB.getArrUserMaterial(sceneArr)
-        result = resAwi.slice(0,4)
-    }
+    // 分词用户文案
+    const textArr = participleTxt(sceneMsg[0].scene_desc)
+    // 查询分词出来的素材
+    result = await MaterialDB.participleQuery(textArr, scene_id, 1, 6)
     if (result == 500) {
-        res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+        res.send({data: [], meta: { msg: '服务器错误', status: 500 }})
         return
+    }
+    if (result.length !== 6) {
+        // 查找素材标签
+        const tagMsg = await TagDB.querySceneTag([scene_id])
+        if (tagMsg == 500) {
+            res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+            return
+        } else if (tagMsg.length == 0) {
+            // 没有相似推荐
+            const remRes = await MaterialDB.getAllMateria(3, 1, (6 - result.length))
+            if (remRes == 500) {
+                res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+                return
+            }
+            result = [...result, ...remRes]
+        } else {
+            const resAwi = await TagDB.getAllTagMateria(tagMsg[0].tag_id)
+            if (resAwi == 500) {
+                res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+                return
+            }
+            const Arr = resAwi.map((v: any) => v.scene_id)
+            const sceceRes = await MaterialDB.queryMateria(Arr.slice(0, 10), 3, 1, (6 - result.length))
+            if (sceceRes == 500) {
+                res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+                return
+            }
+            result = [...result, ...sceceRes]
+        }
     }
     // 获取素材的素材的点赞、收藏、评论数量
     const materiaIdArr = result.map((v: any) => v.id)

@@ -29,5 +29,16 @@ module.exports = {
                 console.log('分词筛选分类词保存失败');
             }
         }
+    },
+    // 文本分词
+    participleTxt (text: string) {
+        const tagText = String(text)
+        let newTagText = ''
+        for(let i = 0; i <= tagText.length;i++) {
+            if(/^[\u4e00-\u9fa5]{0,}$/.test(tagText[i])) {
+                newTagText += tagText[i]
+            }
+        }
+        return segment.doSegment(newTagText).map((v: any) => v.w)
     }
 }

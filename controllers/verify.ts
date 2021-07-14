@@ -30,16 +30,16 @@ module.exports = async function(req:any, res:any, next:any) {
         // 验证token与是否被封号
         const token = req.headers.authorization 
         if (!token) {
-            res.send({data: {}, meta: { msg: 'NO token', status: 403 }})
+            res.send({data: {}, meta: { msg: 'NO token', status: 401 }})
             return
         }
         const userKey = Token.de(token)
         if (userKey.status === 'error') {
-            res.send({data: {}, meta: { msg: 'token无效', status: 403 }})
+            res.send({data: {}, meta: { msg: 'token无效', status: 401 }})
             return
         } 
         else if (userKey.data.time + 43200000 < new Date().getTime()) {   // token 12小时过期
-            res.send({data: {}, meta: { msg: 'token已过期,请重新登录', status: 403 }})
+            res.send({data: {}, meta: { msg: 'token已过期,请重新登录', status: 401 }})
             return
         } 
         // 查询用户信息
@@ -51,7 +51,7 @@ module.exports = async function(req:any, res:any, next:any) {
             res.send({data: {}, meta: { msg: '无此用户', status: 404 }})
             return
         } else if (result[0].user_type == 1) {
-            res.send({data: {}, meta: { msg: '账号违规已封号', status: 403 }})
+            res.send({data: {}, meta: { msg: '账号违规已封号', status: 401 }})
             return
         } else {
             req.userMsg = result[0]

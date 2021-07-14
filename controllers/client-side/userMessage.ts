@@ -97,7 +97,7 @@ const login = async (req: any, res: any) => {
         sex: result[0].sex,
         region: result[0].region,
         signature: result[0].signature,
-        roken: token
+        token: token
     }
     // 判断用户资料是否完善
     if (result[0].user_image === null || result[0].user_name === null ) {
@@ -110,9 +110,9 @@ const login = async (req: any, res: any) => {
 // 获取资源访问路径
 const resource = async (req: any, res: any) => {
     let data:any = {}
-    // data.images = 'http://127.0.0.1:5000' + configKey.visitPath.images
-    // data.video = 'http://127.0.0.1:5000' + configKey.visitPath.video
-    // data.user_images = 'http://127.0.0.1:5000' + configKey.visitPath.user_images
+    data.images = 'http://127.0.0.1:5000' + configKey.visitPath.images
+    data.video = 'http://127.0.0.1:5000' + configKey.visitPath.video
+    data.user_images = 'http://127.0.0.1:5000' + configKey.visitPath.user_images
     data = configKey.visitPath
     res.send({data: data, meta: { msg: '获取成功', status: 200 }})
 }
