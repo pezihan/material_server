@@ -4,6 +4,8 @@ var Mulet = require('../../util/multerconfig')
 var TagDB = require('../../modules/TagDB')
 var makeTag = require('../../lib/makeTag')
 var CommentBD = require('../../modules/CommentDB')
+var { fileVisitPath: filePath } = require('../../util/Key')
+var fs = require('fs')
 
 // 获取用户的主页素材
 const usermaterial = async (req: any, res: any) => {
@@ -16,7 +18,7 @@ const usermaterial = async (req: any, res: any) => {
     let result = []
     let state = 1
     // 判断是否自己查看自己的主页素材，如果是自己可以看到自己违规的素材
-    if (req.userMsg.id == user_id) {
+    if (req.userMsg && req.userMsg.id == user_id) {
         state = 2
     }
     if (Number(type) !== 3) {
@@ -127,6 +129,14 @@ const upMaterial = async (req: any, res: any) => {
             }else if (type == 2) {
                 // 上传的视频
                 video_path = req.filePath
+                // 生成视频预览图
+                phone_path = md5
+                const imagePath = filePath.images + phone_path
+                const imageRes = await create(filePath.video + video_path, imagePath)
+                if (imageRes == false || imageRes == undefined) {
+                    res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
+                    return
+                }
             }
             // 保存到数据库
             const result = await MaterialDB.setUserMaterial(userMsg.id, phone_path, video_path, md5, type, scene_desc)
@@ -201,12 +211,34 @@ const deleteMaterial = async (req: any, res: any) => {
         res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
         return
     }
-    const result = await MaterialDB.deleteUserMaterial(req.userMsg.id, scene_id)
+    // 查询素材信息
+    const sceneMsg = await MaterialDB.getUserMaterialMsg(scene_id)
+    if (sceneMsg == 500 || sceneMsg == false) {
+        res.send({data: [], meta: { msg: '删除失败', status: 500 }})
+        return
+    }
+    // 删除素材标签
+    const deleteTag = await TagDB.deleteSceneAllTag(scene_id)
+    if (deleteTag == 500 || deleteTag == false) {
+        res.send({data: [], meta: { msg: '删除失败', status: 500 }})
+        return
+    }
+    // 删除素材
+    const result = await MaterialDB.deleteMaterial(req.userMsg.id, scene_id)
     if (result == 500 || result == false) {
-        res.send({data: [], meta: { msg: '删除失败', status: 400 }})
+        res.send({data: [], meta: { msg: '删除失败', status: 500 }})
         return
     }
     res.send({data: [], meta: { msg: '删除成功', status: 200 }})
+    const deletePath = sceneMsg[0].type == 1 ? filePath.images + sceneMsg[0].phone_path : filePath.video + sceneMsg[0].video_path
+    const deleteimagesPath = filePath.images + sceneMsg[0].phone_path
+    // 删除本地的文件
+    try {
+        fs.unlinkSync(deletePath)
+        fs.unlinkSync(deleteimagesPath)
+    } catch(err) {
+        console.log(`删除${deletePath}文件失败`, err)
+    }
 }
 
 // 评论素材

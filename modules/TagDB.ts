@@ -251,5 +251,14 @@ module.exports = {
             return 500
         }
         return result
-    } 
+    },
+    // 删除素材所有标签
+    async deleteSceneAllTag (scene_id: number) {
+        const sql = `DELETE FROM scene_tag_relation WHERE scene_id = ${scene_id}`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return false
+        }
+        return true
+    }
 }

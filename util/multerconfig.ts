@@ -1,5 +1,6 @@
 let multer = require('multer');
 var md5 = require('blueimp-md5');
+var pathFile = require('../file_path_config.json')
 
 // 头像
 let limits1 = {
@@ -11,15 +12,14 @@ let limits1 = {
 let storage1 =  multer.diskStorage({
     destination: function (req: any, file: any, cb: any) {
         if (file) {
-            cb(null, './public/user_images');
+            cb(null, `${pathFile.path}/user_images`);
         }
     },
     filename: function (req: any, file: any, cb: any) {
         if (file) {
             const user_id = req.userMsg == undefined ? 'admin' : req.userMsg.id
-            const postfix = file.originalname.substring(file.originalname.lastIndexOf('.'), file.originalname.length)
             const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
-            var changedName = md5((user_id + new Date().getTime())+ verifyInt + file.originalname) + postfix
+            var changedName = md5((user_id + new Date().getTime())+ verifyInt + file.originalname)
             cb(null, changedName);
             req.filePath = changedName
         }
@@ -44,18 +44,16 @@ let limits2 = {
 let storage2 =  multer.diskStorage({
     destination: function (req: any, file: any, cb: any) {
         if (file) {
-            cb(null, `./public/${req.storagePath}`);
+            cb(null, `${pathFile.path}/${req.storagePath}`);
         }
     },
     filename: function (req: any, file: any, cb: any) {
         if (file) {
             const user_id = req.userMsg.id
-            const postfix = file.originalname.substring(file.originalname.lastIndexOf('.'), file.originalname.length)
             const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
             var Md5 =  md5((user_id + new Date().getTime())+ verifyInt + file.originalname)
-            var changedName = Md5 + postfix
-            cb(null, changedName);
-            req.filePath = changedName
+            cb(null, Md5);
+            req.filePath = Md5
             req.md5 = Md5
         }
     }

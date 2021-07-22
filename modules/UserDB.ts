@@ -138,9 +138,9 @@ module.exports = {
         let sql = `SELECT * FROM users WHERE `
         queryArr.forEach((item: any, index: number) => {
             if (index == queryArr.length - 1) {
-                sql += `id LIKE '%${item}%' OR user_name LIKE '%${item}%' OR signature LIKE '%${item}%' ORDER BY id DESC LIMIT ${pageSize},${limit}`
+                sql += `id LIKE '%${item}%' OR user_name LIKE '%${item}%' OR signature LIKE '%${item}%' OR phone = "${item}" ORDER BY id DESC LIMIT ${pageSize},${limit}`
             } else {
-                sql += `id LIKE '%${item}%' OR user_name LIKE '%${item}%' OR signature LIKE '%${item}%' OR `
+                sql += `id LIKE '%${item}%' OR user_name LIKE '%${item}%' OR signature LIKE '%${item}%' OR phone = "${item}" OR `
             }
         })
         const result = await SySqlConnect(sql)

@@ -4,11 +4,11 @@ module.exports = {
     // 获取图片或视频素材
     async getUserMaterial (user_id: number, type: number, start: number, limit: number, state: number = 1):Promise<number | Array<object>> {
         const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
-        let state_text = `state = 1`
+        let state_text = `AND state = 1`
         if (state != 1) {
             state_text = ""
         }
-        const sql = `SELECT * FROM material WHERE user_id = ? AND type = ? AND ${state_text} ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
+        const sql = `SELECT * FROM material WHERE user_id = ? AND type = ? ${state_text} ORDER BY up_time DESC LIMIT ${pageSize},${limit}`
         const sqlArr = [user_id, type]
         const result = await SySqlConnect(sql, sqlArr)
         if (result === undefined) {
@@ -19,7 +19,7 @@ module.exports = {
     // 查询被收藏的素材
     async getUserCollect(user_id: number, start: number, limit: number):Promise<number | Array<object>> {
         const pageSize = start != undefined || limit != undefined ? (start - 1) * limit : 1
-        const sql = `SELECT * FROM material_list_amount WHERE user_id = ? ORDER BY like_time DESC LIMIT ${pageSize},${limit}`
+        const sql = `SELECT * FROM material_list_amount WHERE user_id = ? AND type = 2 ORDER BY like_time DESC LIMIT ${pageSize},${limit}`
         const sqlArr = [user_id]
         const result = await SySqlConnect(sql, sqlArr)
         if (result === undefined) {
@@ -33,6 +33,15 @@ module.exports = {
             return []
         }
         const sql = `SELECT * FROM material WHERE id IN (${arr}) AND state = 1 AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1)`
+        const result = await SySqlConnect(sql)
+        if (result === undefined) {
+            return 500
+        }
+        return result
+    },
+    // 查询素材详情
+    async getUserMaterialMsg (id: number) {
+        const sql = `SELECT * FROM material WHERE id = ${id} AND user_id NOT IN (SELECT id FROM users WHERE user_type = 1)`
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500
@@ -178,6 +187,18 @@ module.exports = {
     // 修改素材为删除状态
     async deleteUserMaterial(user_id: number, scene_id: number) {
         const sql =  `UPDATE material SET state = 2 WHERE user_id = ? AND id = ?`
+        const sqlArr = [user_id, Number(scene_id)]
+        const result = await SySqlConnect(sql, sqlArr)
+        if (result === undefined) {
+            return 500
+        } else if(result.affectedRows === 0) {
+            return false
+        }
+        return true
+    },
+    // 真实删除一条素材数据
+    async deleteMaterial (user_id: number, scene_id: number) {
+        const sql = `DELETE FROM material WHERE user_id = ? AND id = ?`
         const sqlArr = [user_id, Number(scene_id)]
         const result = await SySqlConnect(sql, sqlArr)
         if (result === undefined) {

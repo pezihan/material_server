@@ -348,15 +348,16 @@ const particulars = async (req: any, res: any) => {
         res.send({data: {}, meta: { msg: '请求参数错误', status: 403 }})
         return
     }
+    const user_id = req.userMsg == undefined ? 0 : req.userMsg.id
     // 查询素材信息
-    const sceneMsg = await MaterialDB.getArrUserMaterial([scene_id])
+    const sceneMsg = await MaterialDB.getUserMaterialMsg(scene_id)
     if (sceneMsg === 500) {
         res.send({data: {}, meta: { msg: '获取失败', status: 500 }})
         return
     } else if (sceneMsg.length === 0) {
         res.send({data: {}, meta: { msg: '素材不存在', status: 404 }})
         return
-    } else if (sceneMsg[0].state == 2) {
+    } else if (sceneMsg[0].state == 2 && user_id != sceneMsg[0].user_id) {
         res.send({data: {}, meta: { msg: '素材违规,禁止访问', status: 403 }})
         return
     }
@@ -427,7 +428,7 @@ const similarity = async (req: any, res: any) => {
     }
     let result = []
     // 查询素材信息
-    const sceneMsg = await MaterialDB.getArrUserMaterial([scene_id]) 
+    const sceneMsg = await MaterialDB.getUserMaterialMsg(scene_id) 
     if (sceneMsg === 500) {
         res.send({data: [], meta: { msg: '获取失败', status: 500 }})
         return
@@ -470,6 +471,15 @@ const similarity = async (req: any, res: any) => {
                 return
             }
             result = [...result, ...sceceRes]
+            // 还是不够六条
+            if (result.length !== 6) {
+                const remRes = await MaterialDB.getAllMateria(3, 1, (6 - result.length))
+                if (remRes == 500) {
+                    res.send({data: [], meta: { msg: '获取失败', status: 500 }})
+                    return
+                }
+                result = [...result, ...remRes]
+            }
         }
     }
     // 获取素材的素材的点赞、收藏、评论数量

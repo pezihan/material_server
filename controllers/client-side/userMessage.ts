@@ -153,6 +153,7 @@ const userMsg = async (req: any, res: any) => {
         sex: userMsg[0].sex,
         region: userMsg[0].region,
         signature: userMsg[0].signature,
+        background: userMsg[0].background,
         user_type: userMsg[0].user_type,
         fansSum: result.sum.fans,
         holdSum: result.sum.hold,

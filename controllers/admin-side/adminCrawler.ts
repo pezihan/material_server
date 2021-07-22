@@ -2,11 +2,12 @@ var TagDB = require('../../modules/TagDB')
 var MaterialDB = require('../../modules/MaterialDB')
 var UserDB = require('../../modules/UserDB')
 var HttpCrawler = require('../../modules/httpCrawler')
-var { visitPath: dwonloadPath } = require('../../util/Key')
+var { fileVisitPath: dwonloadPath } = require('../../util/Key')
 var makeTag = require('../../lib/makeTag')
 var axios = require('axios')
 var md5 = require('blueimp-md5')
 var fs = require('fs')
+var { create } = require('../../util/Screenshot')
 
 // 图片爬取请求
 const getImageReq  = async (req: any, res: any) => {
@@ -57,13 +58,12 @@ const setImagesReq = async (req: any, res: any) => {
     // 下载素材
     const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
     const sceneMd5 = md5(verifyInt + new Date().getTime() + user_id + data.middleUR)
-    const filename = sceneMd5 + data.middleURL.substring(data.middleURL.lastIndexOf("."))
-    const updatePath = '.' + dwonloadPath.images + filename
+    const updatePath = dwonloadPath.images + sceneMd5
     try {
         const { data: result } = await axios({url:data.middleURL, responseType: 'arraybuffer'})
         fs.writeFileSync(updatePath, result, 'binary')
         // 保存到数据库
-        const Msg = await MaterialDB.adminSetUserMaterial(user_id, filename, '', sceneMd5 , 1 , data.fromPageTitleEnc, data.di)
+        const Msg = await MaterialDB.adminSetUserMaterial(user_id, sceneMd5, '', sceneMd5 , 1 , data.fromPageTitleEnc, data.di)
         if (Msg == 500) {
             res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
             return
@@ -136,13 +136,19 @@ const setVideoReq = async (req:any, res: any) => {
     // 下载素材
     const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
     const sceneMd5 = md5(verifyInt + new Date().getTime() + user_id + data.photo.id)
-    const filename = sceneMd5 + '.mp4'
-    const updatePath = '.' + dwonloadPath.video + filename
+    const updatePath = dwonloadPath.video + sceneMd5
     try {
         const { data: result } = await axios({url:data.photo.photoUrl, responseType: 'arraybuffer'})
         fs.writeFileSync(updatePath, result, 'binary')
+        // 截取图片
+        const imagePath = dwonloadPath.images + sceneMd5
+        const imageRes = await create(updatePath, imagePath)
+        if (imageRes == false || imageRes == undefined) {
+            res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
+            return
+        }
         // 保存到数据库
-        const Msg = await MaterialDB.adminSetVideoMaterial(user_id, '', filename, sceneMd5 , 2 , data.photo.caption, data.photo.id)
+        const Msg = await MaterialDB.adminSetVideoMaterial(user_id, sceneMd5, sceneMd5, sceneMd5 , 2 , data.photo.caption, data.photo.id)
         if (Msg == 500) {
             res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
             return

@@ -10,8 +10,8 @@ module.exports = async function(req:any, res:any, next:any) {
         login_ip = login_ip.split(',')[0];
     }
     console.log(`${new Date().toLocaleString()} - request method：${req.method} - Request path：${req.path} - IP address ：${login_ip}`);
-    // 那些路径不需要token
-    const path: Array<string> = ['/public', '/node_modules', '/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/classify', '/user/similarity', '/user/getComment', '/admin/login']
+    // 那些路径不需要token 
+    const path: Array<string> = ['/public', '/node_modules', '/user/hotSearch','/user/verify', '/user/sign', '/user/login','/user/resource','/user/holdlist','/user/classify', '/user/similarity', '/user/getComment', '/admin/login']
     let index = -1
     for (let i = 0; i < path.length; i++) {
         index = req.path.search(path[i])

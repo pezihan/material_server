@@ -5,11 +5,14 @@ const bodyParser = require('body-parser')
 const adminRouter = require('./routes/admin')
 const userRouter = require('./routes/user')
 const verifyPath = require('./controllers/verify')
+var filePath = require('./file_path_config.json')
 const cors = require('cors') // 跨域插件
 const app = express();
+var fs = require('fs')
 // 端口
 const port = 5000;
 
+console.log('资源路径：',filePath.path);
 
 // 改写
 const http = require('http');
@@ -21,6 +24,24 @@ app.use(cookieParser());
 
 //静态资源
 app.use('/public', express.static(path.join(__dirname, '../public')));
+// app.use('/public', express.static(filePath.path))
+app.use('/resource', function (req: any, res: any) { // 资源访问
+  try {
+    if (req.url.lastIndexOf('material_images') !== -1 || req.url.lastIndexOf('user_images') !== -1) { // 图片
+      var content =  fs.readFileSync(filePath.path + req.url); 
+      res.setHeader('Content-type','image/jpeg')
+      res.send(content)
+    } else if (req.url.lastIndexOf('material_video')) { // 视频
+      var content = fs.readFileSync(filePath.path + req.url);
+      res.setHeader('Content-type','video/mp4')
+      res.send(content) 
+    } else {
+      res.send({data: {}, meta: { status: 404, msg: '404' }});
+    }
+  } catch (err) {
+    res.send({data: {}, meta: { status: 404, msg: '404' }});
+  }
+})
 app.use('/node_modules', express.static(path.join(__dirname, '../node_modules')));
 
 

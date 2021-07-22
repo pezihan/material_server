@@ -2,10 +2,12 @@ const axios = require('axios')
 const fs = require('fs')
 var child_process=require("child_process")
 const iconvLite = require('iconv-lite')
+const exec = require('child_process').exec;
 const inquirer = require('inquirer')
 const mysql = require('mysql')
 const md5 = require('blueimp-md5')
 const nodepath = require('path')
+const filePath = require('../file_path_config.json')
 
 let pool = mysql.createPool({
     host: '127.0.0.1',
@@ -84,7 +86,9 @@ let query = ''
 let max = 1
 // 用户id
 let user_id = null
-let path = '../public/material_video' // 默认存储位置
+//let path = '../public/material_video' // 默认存储位置
+let path = filePath.path.lastIndexOf('.') !== -1 ? '../' + filePath.path + '/material_video' : filePath.path + '/material_video'
+let imagePath = filePath.path.lastIndexOf('.') !== -1 ? '../' + filePath.path + '/material_images' : filePath.path + '/material_images'
 let sum = 0
 const url = `https://xiguax1.xyz`
 let header,param;
@@ -117,6 +121,7 @@ inquirer.prompt(xuanze).then(answers1 => {
     } else if (answers1.type == 2) {
         inquirer.prompt(onequers).then(async answers2 => {
             vdeioweb = answers2.url
+            user_id = answers2.user_id
             header = {
                 'user-agent' : 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
                 'referer' : 'https://xyunso3.xyz/?mod=search&k=c',
@@ -382,13 +387,23 @@ async function doenload (urlpath, title) {
         else console.log("合并脚本运行完成")
         // 运ffmpeng转码
         const Feeppath = nodepath.resolve(path)
-        child_process.exec(`ffmpeg -i "${Feeppath}/private/private/${fileName}.ts" -c copy ${Feeppath}/private/private/${fileName}.mp4`,function(error,stdout,stderr){
+        const phone_path = fileName + '.jpg'
+        const FeepImagepath = nodepath.resolve(imagePath)
+        child_process.exec(`ffmpeg -i "${Feeppath}/private/private/${fileName}.ts" -c copy ${Feeppath}/private/${fileName}.mp4`,function(error,stdout,stderr){
             if(error !==null){
                 console.log("exec error"+error, '转码失败')
             } else {
                 console.log('转码完成..');
                 // 删除ts视频
                 fs.unlinkSync(`${path}/private/private/${fileName}.ts`);
+                // 生成截图 
+            child_process.exec(`ffmpeg -ss 00:00:01 -i "${Feeppath}/private/${fileName}.mp4"  -frames:v 1 -y ${FeepImagepath}/${phone_path}`,function(error,stdout,stderr){
+                if(error !==null){
+                    console.log("exec error"+error, '截图失败')
+                } else {
+                    console.log('截图..');
+                }
+            })
             }
         })
         // 删除文件夹
@@ -414,9 +429,9 @@ async function doenload (urlpath, title) {
         }
     })
     const up_time = new Date().getTime()
-        const state = 1
+        const state = 2
             var sql = `INSERT INTO material (user_id, phone_path, video_path, md5, scene_desc, state, up_time, type, ks_id) VALUES (?,?,?,?,?,?,?,?,?)`
-            var sqlArr = [user_id, '', `private/${fileName}.mp4`, fileName, title.trim(), state, up_time, 2, videoMd5]
+            var sqlArr = [user_id, fileName + '.jpg', `private/${fileName}.mp4`, fileName, title.trim(), state, up_time, 2, videoMd5]
             var result = await SySqlConnect(sql, sqlArr)
             if (result === undefined) {
                 console.log('数据库写入失败，退出下载')
@@ -439,4 +454,20 @@ function getMax(arr){
 		}
 	}
 	return {max: max , maxIndex: maxIndex}
+}
+
+
+function create (path, fileName) {
+    return new Promise(async (resolve,reject)=> {
+        await exec(`ffmpeg -ss 00:00:01 -i ${path}  -frames:v 1 -y ${fileName}`, async function(error, stdout, stderr) {
+            if (error) {
+                console.log(error)
+                resolve(false)
+            }
+            console.log(stdout)
+            resolve(fileName)
+        })
+    }).catch((err)=> {
+        console.log(err);
+    })
 }
