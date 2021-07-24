@@ -160,7 +160,7 @@ module.exports = {
     },
     // 删除搜索关键词
     async deleteKeyword(keyword: string) {
-        const sql = `DELETE FROM user_keyword WHERE keyword = '${keyword}'`
+        const sql = `DELETE FROM user_keyword WHERE keyword = "${keyword}"`
         const result = await SySqlConnect(sql)
         if (result === undefined) {
             return 500

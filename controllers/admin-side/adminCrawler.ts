@@ -136,13 +136,13 @@ const setVideoReq = async (req:any, res: any) => {
     // 下载素材
     const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
     const sceneMd5 = md5(verifyInt + new Date().getTime() + user_id + data.photo.id)
-    const updatePath = dwonloadPath.video + sceneMd5
+    const updatePath = dwonloadPath.video + sceneMd5 + '.mp4'
     try {
         const { data: result } = await axios({url:data.photo.photoUrl, responseType: 'arraybuffer'})
         fs.writeFileSync(updatePath, result, 'binary')
         // 截取图片
         const imagePath = dwonloadPath.images + sceneMd5
-        const imageRes = await create(updatePath, imagePath)
+        const imageRes = await create(updatePath, imagePath, sceneMd5)
         if (imageRes == false || imageRes == undefined) {
             res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
             return

@@ -270,8 +270,9 @@ async function doenload (urlpath, title) {
                         console.log("exec error"+error, '转码失败')
                     } else {
                         console.log('转码完成..');
-                        // 删除ts视频
-                        fs.unlinkSync(`${path}/private/private/${fileName}.ts`);
+                        // 重命名
+                        fs.rename(`${Feeppath}/private/${videoMd5}.mp4`, `${Feeppath}/private/${videoMd5}`, (err) => { if (err) { console.log('重命名失败') }})
+                        fs.rename(`${FeepImagepath}/${phone_path}`, `${FeepImagepath}/${videoMd5}`, (err) => { if (err) { console.log('重命名失败') }})
                     }
                 })
             }
@@ -301,7 +302,7 @@ async function doenload (urlpath, title) {
     const up_time = new Date().getTime()
         const state = 2
             var sql = `INSERT INTO material (user_id, phone_path, video_path, md5, scene_desc, state, up_time, type, ks_id) VALUES (?,?,?,?,?,?,?,?,?)`
-            var sqlArr = [user_id, videoMd5 + '.jpg', `private/${videoMd5}.mp4`, videoMd5, title.trim(), state, up_time, 2, videoMd5]
+            var sqlArr = [user_id, videoMd5, `private/${videoMd5}`, videoMd5, title.trim(), state, up_time, 2, videoMd5]
             var result = await SySqlConnect(sql, sqlArr)
             if (result === undefined) {
                 console.log('数据库写入失败，退出下载')

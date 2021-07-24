@@ -201,7 +201,7 @@ const getkeyword = async (req: any, res: any) => {
 // 删除关键词
 const delkeyword = async (req: any, res: any) => {
     const { keyword } = req.query
-    if (keyword == '' || keyword == undefined) {
+    if (keyword == undefined) {
         res.send({data: {}, meta: { msg: '请求参数错误', status: 403 }})
         return
     }

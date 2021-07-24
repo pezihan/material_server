@@ -323,6 +323,7 @@ const search = async (req: any, res: any) => {
     }
     const user_id = req.userMsg == undefined ? 0 : req.userMsg.id
     // 将将关键词写入数据库
+    if (query == "" || query == undefined) return
     TagDB.setKeyword([query], user_id)
 }
 

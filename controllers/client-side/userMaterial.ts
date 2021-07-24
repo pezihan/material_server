@@ -122,24 +122,23 @@ const upMaterial = async (req: any, res: any) => {
         }
         if(!!req.file){
             let phone_path = ''
-            let video_path = ''
+            // let video_path = ''
             let md5 = req.md5
             if (type == 1) {
                 phone_path = req.filePath
             }else if (type == 2) {
                 // 上传的视频
-                video_path = req.filePath
+                // video_path = md5
                 // 生成视频预览图
-                phone_path = md5
-                const imagePath = filePath.images + phone_path
-                const imageRes = await create(filePath.video + video_path, imagePath)
+                const imagePath = filePath.images + md5
+                const imageRes = await create(filePath.video + req.filePath, imagePath)
                 if (imageRes == false || imageRes == undefined) {
                     res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
                     return
                 }
             }
             // 保存到数据库
-            const result = await MaterialDB.setUserMaterial(userMsg.id, phone_path, video_path, md5, type, scene_desc)
+            const result = await MaterialDB.setUserMaterial(userMsg.id, md5, md5, md5, type, scene_desc)
             if (result == 500) {
                 res.send({data:{},meta:{msg: '上传失败',status: 500}})
                 return

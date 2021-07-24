@@ -28,7 +28,7 @@ module.exports = async function(req:any, res:any, next:any) {
             }
         }
         // 验证token与是否被封号
-        const token = req.headers.authorization 
+        const token = req.headers.authorization
         if (!token) {
             res.send({data: {}, meta: { msg: 'NO token', status: 401 }})
             return

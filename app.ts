@@ -32,13 +32,25 @@ app.use('/resource', function (req: any, res: any) { // 资源访问
       res.setHeader('Content-type','image/jpeg')
       res.send(content)
     } else if (req.url.lastIndexOf('material_video')) { // 视频
-      var content = fs.readFileSync(filePath.path + req.url);
-      res.setHeader('Content-type','video/mp4')
-      res.send(content) 
+      // var content = fs.readFileSync(filePath.path + req.url);
+      // res.setHeader('Content-type','video/mp4')
+      // res.send(content) 
+      var readStream = fs.ReadStream(filePath.path + req.url) // 流式传输
+      res.writeHead(200, { 
+        'Content-Type' : 'video/mp4', 
+        'Accept-Ranges' : 'bytes', 
+        'Server' : 'Microsoft-IIS/7.5', 
+        'X-Powered-By' : 'ASP.NET'
+        }); 
+        readStream.on('close', function() { 
+          res.end()
+        }); 
+        readStream.pipe(res)
     } else {
       res.send({data: {}, meta: { status: 404, msg: '404' }});
     }
   } catch (err) {
+    console.log(err);
     res.send({data: {}, meta: { status: 404, msg: '404' }});
   }
 })

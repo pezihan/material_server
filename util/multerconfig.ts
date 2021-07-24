@@ -53,7 +53,11 @@ let storage2 =  multer.diskStorage({
             const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
             var Md5 =  md5((user_id + new Date().getTime())+ verifyInt + file.originalname)
             cb(null, Md5);
-            req.filePath = Md5
+            if (file.mimetype == 'video/mp4' || file.mimetype == 'video/avi' || file.mimetype == 'video/mov') {
+                req.filePath = Md5 + '.mp4'
+            } else {
+                req.filePath = Md5
+            }
             req.md5 = Md5
         }
     }

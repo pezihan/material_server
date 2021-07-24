@@ -402,6 +402,9 @@ async function doenload (urlpath, title) {
                     console.log("exec error"+error, '截图失败')
                 } else {
                     console.log('截图..');
+                    // 重命名
+                    fs.rename(`${Feeppath}/private/${fileName}.mp4`, `${Feeppath}/private/${fileName}`, (err) => { if (err) { console.log('重命名失败') }})
+                    fs.rename(`${FeepImagepath}/${phone_path}`, `${FeepImagepath}/${fileName}`, (err) => { if (err) { console.log('重命名失败') }})
                 }
             })
             }
@@ -431,7 +434,7 @@ async function doenload (urlpath, title) {
     const up_time = new Date().getTime()
         const state = 2
             var sql = `INSERT INTO material (user_id, phone_path, video_path, md5, scene_desc, state, up_time, type, ks_id) VALUES (?,?,?,?,?,?,?,?,?)`
-            var sqlArr = [user_id, fileName + '.jpg', `private/${fileName}.mp4`, fileName, title.trim(), state, up_time, 2, videoMd5]
+            var sqlArr = [user_id, fileName, `private/${fileName}`, fileName, title.trim(), state, up_time, 2, videoMd5]
             var result = await SySqlConnect(sql, sqlArr)
             if (result === undefined) {
                 console.log('数据库写入失败，退出下载')
