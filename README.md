@@ -22,9 +22,11 @@ API 接口文档：已部署至本项目根节点
 
 - 创建数据库
 
-   数据库文件在：db --> material.sql
+  数据库文件在：db --> material.sql
 
-   创建数据库 material，运行material.sql  SQL 语句导入数据库
+  创建数据库 material，运行material.sql  SQL 语句导入数据库
+
+  `注：创建数据库 material 选择字符集utf8mb4 `
 
   **​ 数据库默认连接名：root   密码： 123456**
 
