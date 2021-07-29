@@ -9,6 +9,17 @@ const md5 = require('blueimp-md5')
 const nodepath = require('path')
 const filePath = require('../file_path_config.json')
 
+
+//创建临时目录
+try {
+    fs.mkdirSync(`${path}/temporary`)
+    fs.mkdirSync(`${path}/private`)
+    fs.mkdirSync(`${path}/private/private`)
+} catch(err) {
+    console.log(`临时目录存在目录存在，开始下载......`);
+}
+
+
 let pool = mysql.createPool({
     host: '127.0.0.1',
     port: 3306,
@@ -297,22 +308,22 @@ async function doenload (urlpath, title) {
     }
     // 开始下载 创建文件夹
     try {
-        fs.mkdirSync(`${path}/${title.trim()}`);
+        fs.mkdirSync(`${path}/temporary/${title.trim()}`);
         // 创建配置文件
         let configData = { record:  ""}
-        var writeStream = fs.createWriteStream(`${path}/${title.trim()}/config.json`)
+        var writeStream = fs.createWriteStream(`${path}/temporary/${title.trim()}/config.json`)
         writeStream.write(JSON.stringify(configData))
         writeStream.end();
         console.log('文件夹创建成功，开始下载.....');
     } catch(err) {
         console.log(err);
-        console.log(`${path}/${title.trim()}    目录存在，开始下载......`);
+        console.log(`${path}/temporary/${title.trim()}    目录存在，开始下载......`);
     }
     
     const fileName = md5(new Date().getTime() + title.trim() + videoMd5)
     // 创建cmd合并脚本
-    let cmdtext = iconvLite.encode(`copy /b *.ts ..\\private\\private\\${fileName}.ts`,'gbk')
-    var writeStream = fs.createWriteStream(`${path}/${title.trim()}/merge.cmd`)
+    let cmdtext = iconvLite.encode(`copy /b *.ts ..\\..\\private\\private\\${fileName}.ts`,'gbk')
+    var writeStream = fs.createWriteStream(`${path}/temporary/${title.trim()}/merge.cmd`)
     writeStream.write(cmdtext)
     writeStream.end();
     console.log('脚本创建成功....');
@@ -321,7 +332,7 @@ async function doenload (urlpath, title) {
     for (let i = 0; i < flowvideourl.length; i++) {
         if (!i) {
             // 读取配置文件
-            fs.readFile(`${path}/${title.trim()}/config.json`, 'utf-8', function (err, data) {
+            fs.readFile(`${path}/temporary/${title.trim()}/config.json`, 'utf-8', function (err, data) {
                 let config = JSON.parse(data)
                 if (config.record != "") {
                     const index = flowvideourl.findIndex(v => v == config.record)
@@ -346,7 +357,7 @@ async function doenload (urlpath, title) {
             console.log('下载失败');
             return
         }
-        const updatePath =  `${path}/${title.trim()}/${i}.ts`
+        const updatePath =  `${path}/temporary/${title.trim()}/${i}.ts`
         // 储存到本地
         fs.writeFileSync(updatePath, data.data, 'binary')
         schedule = i + 1
@@ -360,25 +371,25 @@ async function doenload (urlpath, title) {
         }
         console.log(nuvberstr +' ' + nuvber + '%');
         // 写入配置
-        fs.readFile(`${path}/${title.trim()}/config.json`, 'utf-8', function (err, data) {
+        fs.readFile(`${path}/temporary/${title.trim()}/config.json`, 'utf-8', function (err, data) {
             if (err) return console.log('配置文件读取出错');
             let config = JSON.parse(data)
             config.record = flowvideourl[i]
             let new_JSON  = JSON.stringify(config);
-            fs.writeFile(`${path}/${title.trim()}/config.json`,new_JSON,function(err){
+            fs.writeFile(`${path}/temporary/${title.trim()}/config.json`,new_JSON,function(err){
                 if (err) return console.log('配置文件写入出错！！');
             })
         })
     }
     // 下载完成，合并视频
-    child_process.execFile("merge.cmd",null,{cwd:`${path}/${title.trim()}`},function(error,stdout,stderr){
+    child_process.execFile("merge.cmd",null,{cwd:`${path}/temporary/${title.trim()}`},function(error,stdout,stderr){
         if(error !==null){
             console.log("exec error"+error)
             // 写入配置
-            fs.readFile(`${path}/${title.trim()}/config.json`, 'utf-8', function (err, data) {
+            fs.readFile(`${path}/temporary/${title.trim()}/config.json`, 'utf-8', function (err, data) {
                 if (err) return console.log('配置文件读取出错');
                 let new_JSON  = ''
-                fs.writeFile(`${path}/${title.trim()}/config.json`,new_JSON,function(err){
+                fs.writeFile(`${path}/temporary/${title.trim()}/config.json`,new_JSON,function(err){
                     if (err) return console.log('配置文件写入出错！！');
                 })
             })
@@ -403,14 +414,14 @@ async function doenload (urlpath, title) {
                 } else {
                     console.log('截图..');
                     // 重命名
-                    fs.rename(`${Feeppath}/private/${fileName}.mp4`, `${Feeppath}/private/${fileName}`, (err) => { if (err) { console.log('重命名失败') }})
-                    fs.rename(`${FeepImagepath}/${phone_path}`, `${FeepImagepath}/${fileName}`, (err) => { if (err) { console.log('重命名失败') }})
+                    // fs.rename(`${Feeppath}/private/${fileName}.mp4`, `${Feeppath}/private/${fileName}`, (err) => { if (err) { console.log('重命名失败') }})
+                    // fs.rename(`${FeepImagepath}/${phone_path}`, `${FeepImagepath}/${fileName}`, (err) => { if (err) { console.log('重命名失败') }})
                 }
             })
             }
         })
         // 删除文件夹
-        let checkUrl = `${path}/${title.trim()}`　　　　//检查文件是否已经存在
+        let checkUrl = `${path}/temporary/${title.trim()}`　　　　//检查文件是否已经存在
         let reservePath = fs.existsSync(checkUrl)
         if (fs.existsSync(checkUrl)) {
             if (fs.statSync(checkUrl).isDirectory()) {
@@ -434,7 +445,7 @@ async function doenload (urlpath, title) {
     const up_time = new Date().getTime()
         const state = 2
             var sql = `INSERT INTO material (user_id, phone_path, video_path, md5, scene_desc, state, up_time, type, ks_id) VALUES (?,?,?,?,?,?,?,?,?)`
-            var sqlArr = [user_id, fileName, `private/${fileName}`, fileName, title.trim(), state, up_time, 2, videoMd5]
+            var sqlArr = [user_id, fileName + '.jpg', `private/${fileName}.mp4`, fileName, title.trim(), state, up_time, 2, videoMd5]
             var result = await SySqlConnect(sql, sqlArr)
             if (result === undefined) {
                 console.log('数据库写入失败，退出下载')
@@ -462,7 +473,7 @@ function getMax(arr){
 
 function create (path, fileName) {
     return new Promise(async (resolve,reject)=> {
-        await exec(`ffmpeg -ss 00:00:01 -i ${path}  -frames:v 1 -y ${fileName}`, async function(error, stdout, stderr) {
+        await exec(`ffmpeg -ss 00:00:15 -i ${path}  -frames:v 1 -y ${fileName}`, async function(error, stdout, stderr) {
             if (error) {
                 console.log(error)
                 resolve(false)

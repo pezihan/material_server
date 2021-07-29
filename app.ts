@@ -24,36 +24,37 @@ app.use(cookieParser());
 
 //静态资源
 app.use('/public', express.static(path.join(__dirname, '../public')));
-// app.use('/public', express.static(filePath.path))
-app.use('/resource', function (req: any, res: any) { // 资源访问
-  try {
-    if (req.url.lastIndexOf('material_images') !== -1 || req.url.lastIndexOf('user_images') !== -1) { // 图片
-      var content =  fs.readFileSync(filePath.path + req.url); 
-      res.setHeader('Content-type','image/jpeg')
-      res.send(content)
-    } else if (req.url.lastIndexOf('material_video')) { // 视频
-      // var content = fs.readFileSync(filePath.path + req.url);
-      // res.setHeader('Content-type','video/mp4')
-      // res.send(content) 
-      var readStream = fs.ReadStream(filePath.path + req.url) // 流式传输
-      res.writeHead(200, { 
-        'Content-Type' : 'video/mp4', 
-        'Accept-Ranges' : 'bytes', 
-        'Server' : 'Microsoft-IIS/7.5', 
-        'X-Powered-By' : 'ASP.NET'
-        }); 
-        readStream.on('close', function() { 
-          res.end()
-        }); 
-        readStream.pipe(res)
-    } else {
-      res.send({data: {}, meta: { status: 404, msg: '404' }});
-    }
-  } catch (err) {
-    console.log(err);
-    res.send({data: {}, meta: { status: 404, msg: '404' }});
-  }
-})
+app.use('/resource', express.static(filePath.path))
+// app.use('/resource', function (req: any, res: any) { // 资源访问
+//   try {
+//     if (req.url.lastIndexOf('material_images') !== -1 || req.url.lastIndexOf('user_images') !== -1) { // 图片
+//       var content =  fs.readFileSync(filePath.path + req.url); 
+//       res.setHeader('Content-type','image/jpeg')
+//       res.send(content)
+//     } else if (req.url.lastIndexOf('material_video')) { // 视频
+//       const urlPath = req.url.lastIndexOf('.') !== -1 ? req.url.substring(0, req.url.lastIndexOf('.')) : req.url
+//       // var content = fs.readFileSync(filePath.path + urlPath);
+//       // res.setHeader('Content-type','video/mp4')
+//       // res.send(content) 
+//       var readStream = fs.ReadStream(filePath.path + urlPath) // 流式传输
+//       res.writeHead(200, { 
+//         'Content-Type' : 'video/mp4', 
+//         'Accept-Ranges' : 'bytes', 
+//         'Server' : 'Microsoft-IIS/7.5', 
+//         'X-Powered-By' : 'ASP.NET'
+//         }); 
+//         readStream.on('close', function() { 
+//           res.end()
+//         }); 
+//         readStream.pipe(res)
+//     } else {
+//       res.send({data: {}, meta: { status: 404, msg: '404' }});
+//     }
+//   } catch (err) {
+//     console.log(err);
+//     res.send({data: {}, meta: { status: 404, msg: '404' }});
+//   }
+// })
 app.use('/node_modules', express.static(path.join(__dirname, '../node_modules')));
 
 

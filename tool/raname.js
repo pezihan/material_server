@@ -55,14 +55,34 @@ async function start () {
     jietu(index)
 }
 
+// async function jietu (index) {
+//     if (index == scenelIst.length) return console.log('已全部完成');
+//     const data = scenelIst[index]
+//     if (data.phone_path.lastIndexOf('.') != -1) {
+//         data.phone_path = data.phone_path.substring(0, data.phone_path.lastIndexOf('.'))
+//     }
+//     if (data.video_path.lastIndexOf('.') != -1) {
+//         data.video_path = data.video_path.substring(0, data.video_path.lastIndexOf('.'))
+//     }
+//     // 保存到数据库
+//     const sql =  `UPDATE material SET phone_path = "${data.phone_path}", video_path = "${data.video_path}" WHERE id = ${data.id}`
+//     const mysqlRes = await SySqlConnect(sql)
+//     if (mysqlRes === undefined) {
+//         return console.log('保存失败', videoPath);
+//     }
+//     index++
+//     jietu(index)
+//     console.log(data.id, '修改完成')
+// }
+
 async function jietu (index) {
     if (index == scenelIst.length) return console.log('已全部完成');
     const data = scenelIst[index]
-    if (data.phone_path.lastIndexOf('.') != -1) {
-        data.phone_path = data.phone_path.substring(0, data.phone_path.lastIndexOf('.'))
+    if (data.phone_path.lastIndexOf('.') == -1) {
+        data.phone_path = data.phone_path + '.jpeg'
     }
-    if (data.video_path.lastIndexOf('.') != -1) {
-        data.video_path = data.video_path.substring(0, data.video_path.lastIndexOf('.'))
+    if (data.video_path.lastIndexOf('.') == -1) {
+        data.video_path = data.video_path + '.mp4'
     }
     // 保存到数据库
     const sql =  `UPDATE material SET phone_path = "${data.phone_path}", video_path = "${data.video_path}" WHERE id = ${data.id}`

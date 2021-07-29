@@ -1,6 +1,7 @@
 let multer = require('multer');
 var md5 = require('blueimp-md5');
 var pathFile = require('../file_path_config.json')
+var nodepath = require('path')
 
 // 头像
 let limits1 = {
@@ -19,7 +20,7 @@ let storage1 =  multer.diskStorage({
         if (file) {
             const user_id = req.userMsg == undefined ? 'admin' : req.userMsg.id
             const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
-            var changedName = md5((user_id + new Date().getTime())+ verifyInt + file.originalname)
+            var changedName = md5((user_id + new Date().getTime())+ verifyInt + file.originalname) + nodepath.extname(file.originalname)
             cb(null, changedName);
             req.filePath = changedName
         }
@@ -36,8 +37,8 @@ let fileFilter1 = function(req: any, file: any, cb: any) {
 
 // 素材图、视频
 let limits2 = {
-    //限制文件大小100m
-    fileSize: 1024 * 1024 * 100,
+    //限制文件大小2g
+    fileSize: 1024 * 1024 * 2000,
     //限制文件数量
     files: 1
 }
@@ -52,12 +53,14 @@ let storage2 =  multer.diskStorage({
             const user_id = req.userMsg.id
             const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
             var Md5 =  md5((user_id + new Date().getTime())+ verifyInt + file.originalname)
-            cb(null, Md5);
-            if (file.mimetype == 'video/mp4' || file.mimetype == 'video/avi' || file.mimetype == 'video/mov') {
-                req.filePath = Md5 + '.mp4'
-            } else {
-                req.filePath = Md5
-            }
+            var filePath = Md5 + nodepath.extname(file.originalname)
+            cb(null, filePath);
+            // if (file.mimetype == 'video/mp4' || file.mimetype == 'video/avi' || file.mimetype == 'video/mov') {
+            //     req.filePath = Md5 + '.mp4'
+            // } else {
+            //     req.filePath = Md5
+            // }
+            req.filePath = filePath
             req.md5 = Md5
         }
     }

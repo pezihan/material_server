@@ -58,12 +58,12 @@ const setImagesReq = async (req: any, res: any) => {
     // 下载素材
     const verifyInt = Math.floor(Math.random() * (999999-100000)) + 100000
     const sceneMd5 = md5(verifyInt + new Date().getTime() + user_id + data.middleUR)
-    const updatePath = dwonloadPath.images + sceneMd5
+    const updatePath = dwonloadPath.images + sceneMd5 + '.jpg'
     try {
         const { data: result } = await axios({url:data.middleURL, responseType: 'arraybuffer'})
         fs.writeFileSync(updatePath, result, 'binary')
         // 保存到数据库
-        const Msg = await MaterialDB.adminSetUserMaterial(user_id, sceneMd5, '', sceneMd5 , 1 , data.fromPageTitleEnc, data.di)
+        const Msg = await MaterialDB.adminSetUserMaterial(user_id, sceneMd5 + '.jpg', '', sceneMd5 , 1 , data.fromPageTitleEnc, data.di)
         if (Msg == 500) {
             res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
             return
@@ -141,14 +141,14 @@ const setVideoReq = async (req:any, res: any) => {
         const { data: result } = await axios({url:data.photo.photoUrl, responseType: 'arraybuffer'})
         fs.writeFileSync(updatePath, result, 'binary')
         // 截取图片
-        const imagePath = dwonloadPath.images + sceneMd5
+        const imagePath = dwonloadPath.images + sceneMd5 + '.jpg'
         const imageRes = await create(updatePath, imagePath, sceneMd5)
         if (imageRes == false || imageRes == undefined) {
             res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
             return
         }
         // 保存到数据库
-        const Msg = await MaterialDB.adminSetVideoMaterial(user_id, sceneMd5, sceneMd5, sceneMd5 , 2 , data.photo.caption, data.photo.id)
+        const Msg = await MaterialDB.adminSetVideoMaterial(user_id, sceneMd5+'.jpg', sceneMd5+'.mp4', sceneMd5 , 2 , data.photo.caption, data.photo.id)
         if (Msg == 500) {
             res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
             return

@@ -5,6 +5,7 @@ var TagDB = require('../../modules/TagDB')
 var makeTag = require('../../lib/makeTag')
 var CommentBD = require('../../modules/CommentDB')
 var { fileVisitPath: filePath } = require('../../util/Key')
+var { create } = require('../../util/Screenshot')
 var fs = require('fs')
 
 // 获取用户的主页素材
@@ -109,8 +110,16 @@ const usermaterial = async (req: any, res: any) => {
 // 上传素材
 const upMaterial = async (req: any, res: any) => {
     const userMsg = req.userMsg
-    let { scene_desc, type, tag_arr } = JSON.parse(req.query)
-    if (type == '' || type == undefined || type < 1 || type > 2 || Array.isArray(tag_arr) == false) {
+    let scene_desc: String; 
+    let type: Number; 
+    let tag_arr: Array<number>;
+    try {
+        [{ scene_desc, type, tag_arr }] = [JSON.parse(req.query.json)]
+    } catch(err) {
+        res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
+        return
+    }
+    if (type == 0 || type == undefined || type < 1 || type > 2 || Array.isArray(tag_arr) == false) {
         res.send({data: [], meta: { msg: '请求参数错误', status: 403 }})
         return
     }
@@ -122,15 +131,16 @@ const upMaterial = async (req: any, res: any) => {
         }
         if(!!req.file){
             let phone_path = ''
-            // let video_path = ''
+            let video_path = ''
             let md5 = req.md5
             if (type == 1) {
                 phone_path = req.filePath
             }else if (type == 2) {
                 // 上传的视频
-                // video_path = md5
+                video_path = req.filePath
                 // 生成视频预览图
-                const imagePath = filePath.images + md5
+                phone_path =  md5 + '.jpg'
+                const imagePath = filePath.images + phone_path
                 const imageRes = await create(filePath.video + req.filePath, imagePath)
                 if (imageRes == false || imageRes == undefined) {
                     res.send({data: {}, meta: { msg: 'Server error', status: 500 }})
@@ -138,7 +148,7 @@ const upMaterial = async (req: any, res: any) => {
                 }
             }
             // 保存到数据库
-            const result = await MaterialDB.setUserMaterial(userMsg.id, md5, md5, md5, type, scene_desc)
+            const result = await MaterialDB.setUserMaterial(userMsg.id, phone_path, video_path, md5, type, scene_desc)
             if (result == 500) {
                 res.send({data:{},meta:{msg: '上传失败',status: 500}})
                 return
