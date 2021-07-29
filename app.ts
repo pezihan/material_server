@@ -6,11 +6,22 @@ const adminRouter = require('./routes/admin')
 const userRouter = require('./routes/user')
 const verifyPath = require('./controllers/verify')
 var filePath = require('./file_path_config.json')
+var exists = require('./util/Key')
 const cors = require('cors') // 跨域插件
 const app = express();
 var fs = require('fs')
 // 端口
 const port = 5000;
+
+// 初始化创建资源目录
+try {
+  console.log(`Start to create.....`)
+  fs.mkdirSync(`${exists.fileVisitPath.images}`)
+  fs.mkdirSync(`${exists.fileVisitPath.video}`)
+  fs.mkdirSync(`${exists.fileVisitPath.user_images}`)
+} catch(err) {
+  console.log(`Directory already exists, start....`)
+}
 
 console.log('资源路径：',filePath.path);
 
@@ -76,5 +87,5 @@ app.use(function(req:any,res:any){
 })
 
 server.listen(port,'0.0.0.0',function() {
-  console.log(`${new Date().toLocaleString()} - ` + `The server running ${port}...http://127.0.0.1:${port}`);
+  console.log(`${new Date().toLocaleString()} - ` + `The server running ${port}...  admin: http://127.0.0.1:${port}`);
 });
